@@ -19,7 +19,6 @@ const AXIS = { stroke: "var(--muted-foreground)", fontSize: 11, fontFamily: "var
 
 export interface ChartPoint {
   date: string;
-  [key: string]: string | number;
 }
 
 /** Downsamples a long series to keep charts responsive. */

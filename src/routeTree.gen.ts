@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CrashesRouteImport } from './routes/crashes'
+import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const CrashesRoute = CrashesRouteImport.update({
   path: '/crashes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MethodologyRoute = MethodologyRouteImport.update({
+  id: '/methodology',
+  path: '/methodology',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SimulatorRoute = SimulatorRouteImport.update({
   id: '/simulator',
   path: '/simulator',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/analysis': typeof AnalysisRoute
   '/compare': typeof CompareRoute
   '/crashes': typeof CrashesRoute
+  '/methodology': typeof MethodologyRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/analysis': typeof AnalysisRoute
   '/compare': typeof CompareRoute
   '/crashes': typeof CrashesRoute
+  '/methodology': typeof MethodologyRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,24 @@ export interface FileRoutesById {
   '/analysis': typeof AnalysisRoute
   '/compare': typeof CompareRoute
   '/crashes': typeof CrashesRoute
+  '/methodology': typeof MethodologyRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analysis' | '/compare' | '/crashes' | '/simulator'
+  fullPaths:
+    '/' | '/analysis' | '/compare' | '/crashes' | '/methodology' | '/simulator'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analysis' | '/compare' | '/crashes' | '/simulator'
-  id: '__root__' | '/' | '/analysis' | '/compare' | '/crashes' | '/simulator'
+  to:
+    '/' | '/analysis' | '/compare' | '/crashes' | '/methodology' | '/simulator'
+  id:
+    | '__root__'
+    | '/'
+    | '/analysis'
+    | '/compare'
+    | '/crashes'
+    | '/methodology'
+    | '/simulator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +94,7 @@ export interface RootRouteChildren {
   AnalysisRoute: typeof AnalysisRoute
   CompareRoute: typeof CompareRoute
   CrashesRoute: typeof CrashesRoute
+  MethodologyRoute: typeof MethodologyRoute
   SimulatorRoute: typeof SimulatorRoute
 }
 
@@ -109,6 +128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrashesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/methodology': {
+      id: '/methodology'
+      path: '/methodology'
+      fullPath: '/methodology'
+      preLoaderRoute: typeof MethodologyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/simulator': {
       id: '/simulator'
       path: '/simulator'
@@ -124,6 +150,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalysisRoute: AnalysisRoute,
   CompareRoute: CompareRoute,
   CrashesRoute: CrashesRoute,
+  MethodologyRoute: MethodologyRoute,
   SimulatorRoute: SimulatorRoute,
 }
 export const routeTree = rootRouteImport

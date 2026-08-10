@@ -1,0 +1,98 @@
+[
+{
+"series":"tqqq",
+"date":"2025-04-09",
+"type":"jump",
+"detail":"daily move 35.2% flagged for review (kept)"
+},
+{
+"series":"irx",
+"date":"1999-10-11",
+"type":"missing",
+"detail":"null close \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"1999-11-11",
+"type":"missing",
+"detail":"null close \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2003-11-11",
+"type":"missing",
+"detail":"null close \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2005-10-10",
+"type":"missing",
+"detail":"null close \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2005-11-11",
+"type":"missing",
+"detail":"null close \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2006-10-09",
+"type":"missing",
+"detail":"null close \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2010-10-11",
+"type":"missing",
+"detail":"null close \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2016-11-11",
+"type":"missing",
+"detail":"null close \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2020-03-19",
+"type":"invalid",
+"detail":"non-positive price -0.02800000086426735 \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2020-03-20",
+"type":"invalid",
+"detail":"non-positive price -0.032999999821186066 \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2020-03-23",
+"type":"invalid",
+"detail":"non-positive price -0.03999999910593033 \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2020-03-24",
+"type":"invalid",
+"detail":"non-positive price -0.032999999821186066 \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2020-03-25",
+"type":"invalid",
+"detail":"non-positive price -0.07000000029802322 \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2020-03-26",
+"type":"invalid",
+"detail":"non-positive price -0.10499999672174454 \u2013 row excluded"
+},
+{
+"series":"irx",
+"date":"2020-03-27",
+"type":"invalid",
+"detail":"non-positive price -0.057999998331069946 \u2013 row excluded"
+}
+]

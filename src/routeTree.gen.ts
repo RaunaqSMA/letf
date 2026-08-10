@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CrashesRouteImport } from './routes/crashes'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrashesRoute = CrashesRouteImport.update({
+  id: '/crashes',
+  path: '/crashes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SimulatorRoute = SimulatorRouteImport.update({
@@ -25,27 +31,31 @@ const SimulatorRoute = SimulatorRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/crashes': typeof CrashesRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/crashes': typeof CrashesRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/crashes': typeof CrashesRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/simulator'
+  fullPaths: '/' | '/crashes' | '/simulator'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/simulator'
-  id: '__root__' | '/' | '/simulator'
+  to: '/' | '/crashes' | '/simulator'
+  id: '__root__' | '/' | '/crashes' | '/simulator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CrashesRoute: typeof CrashesRoute
   SimulatorRoute: typeof SimulatorRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crashes': {
+      id: '/crashes'
+      path: '/crashes'
+      fullPath: '/crashes'
+      preLoaderRoute: typeof CrashesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/simulator': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CrashesRoute: CrashesRoute,
   SimulatorRoute: SimulatorRoute,
 }
 export const routeTree = rootRouteImport

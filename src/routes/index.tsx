@@ -187,16 +187,16 @@ function Dashboard() {
                     {monthYear(event.start)} – {monthYear(event.end)}
                   </td>
                   <td className="num px-3 py-2 text-right text-loss">
-                    {percent(stats.underlyingDrawdown, 1)}
+                    {percent(stats.underlyingDecline, 1)}
                   </td>
                   <td className="num px-3 py-2 text-right text-loss">
-                    {percent(stats.navDrawdown, 1)}
+                    {percent(stats.navDecline, 1)}
                   </td>
                   <td className="num px-3 py-2 text-right text-loss">
-                    {percent(stats.portfolioDrawdown, 1)}
+                    {percent(stats.portfolioDecline, 1)}
                   </td>
                   <td className="num px-3 py-2 text-right text-xs">
-                    {monthsLabel(stats.recoveryMonths)}
+                    {monthsLabel(stats.portfolioRecoveryMonths)}
                   </td>
                 </tr>
               ))}

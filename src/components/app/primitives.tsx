@@ -79,7 +79,7 @@ export function Metric({
 }: {
   label: string;
   value: string;
-  sub?: string;
+  sub?: string | undefined;
   tone?: MetricTone;
   tip?: string;
   emphasis?: boolean;

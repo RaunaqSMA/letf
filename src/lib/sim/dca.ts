@@ -1,4 +1,4 @@
-import type { DailySeries, Frequency, SimulationConfig } from "./types";
+import type { CustomEntry, DailySeries, Frequency, SimulationConfig } from "./types";
 
 /** Indices of the trading days on which a contribution lands. */
 export function contributionIndices(
@@ -53,35 +53,80 @@ export interface DCAPath {
   value: Float64Array;
   buyIndices: number[];
   unitsBought: number[];
+  /** Contribution amount for each buy index */
+  amounts: number[];
+}
+
+/** Maps manual entries onto the first trading day on/after each entry date. */
+export function customIndices(
+  dates: string[],
+  entries: CustomEntry[],
+): { index: number; amount: number }[] {
+  if (dates.length === 0) return [];
+  const first = dates[0]!;
+  const last = dates[dates.length - 1]!;
+  const out: { index: number; amount: number }[] = [];
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+  for (const e of sorted) {
+    if (!e.date || e.amount <= 0) continue;
+    if (e.date > last || e.date < first) continue;
+    let lo = 0;
+    let hi = dates.length - 1;
+    let found = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (dates[mid]! >= e.date) {
+        found = mid;
+        hi = mid - 1;
+      } else lo = mid + 1;
+    }
+    if (found >= 0) out.push({ index: found, amount: e.amount });
+  }
+  return out;
 }
 
 /** Runs contribution-based DCA over a precomputed NAV path. */
 export function runDCA(
   daily: Pick<DailySeries, "dates" | "nav">,
-  config: Pick<SimulationConfig, "contribution" | "frequency" | "timing" | "transactionCost">,
+  config: Pick<
+    SimulationConfig,
+    "contribution" | "frequency" | "timing" | "transactionCost" | "customEntries"
+  >,
 ): DCAPath {
   const n = daily.dates.length;
   const units = new Float64Array(n);
   const contributions = new Float64Array(n);
   const value = new Float64Array(n);
-  const buyIndices = contributionIndices(daily.dates, config.frequency, config.timing);
+  const custom = config.frequency === "custom";
+  const customHits = custom ? customIndices(daily.dates, config.customEntries ?? []) : [];
+  const buyIndices = custom
+    ? customHits.map((h) => h.index)
+    : contributionIndices(daily.dates, config.frequency, config.timing);
+  const amountAt = new Map<number, number>();
+  if (custom) {
+    for (const h of customHits) amountAt.set(h.index, (amountAt.get(h.index) ?? 0) + h.amount);
+  }
   const buySet = new Set(buyIndices);
   const unitsBought: number[] = [];
+  const amounts: number[] = [];
 
   let cumUnits = 0;
   let cumContrib = 0;
   for (let i = 0; i < n; i++) {
     if (buySet.has(i)) {
       const price = daily.nav[i]!;
-      const invested = Math.max(0, config.contribution - config.transactionCost);
+      const amount = custom ? (amountAt.get(i) ?? 0) : config.contribution;
+      const invested = Math.max(0, amount - config.transactionCost);
       const bought = price > 0 ? invested / price : 0;
       cumUnits += bought;
-      cumContrib += config.contribution;
+      cumContrib += amount;
       unitsBought.push(bought);
+      amounts.push(amount);
     }
     units[i] = cumUnits;
     contributions[i] = cumContrib;
     value[i] = cumUnits * daily.nav[i]!;
   }
-  return { units, contributions, value, buyIndices, unitsBought };
+  const uniqueBuyIndices = [...buySet].sort((a, b) => a - b);
+  return { units, contributions, value, buyIndices: uniqueBuyIndices, unitsBought, amounts };
 }

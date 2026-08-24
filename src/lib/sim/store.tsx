@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { marketDataQuery } from "@/lib/market/loader";
 import { INSTRUMENTS, type InstrumentId, type MarketDataset } from "@/lib/market/types";
 import { runSimulation } from "./simulate";
-import type { SimulationConfig, SimulationResult } from "./types";
+import type { CustomEntry, SimulationConfig, SimulationResult } from "./types";
+
+const ENTRIES_KEY = "letf-dca-custom-entries";
 
 export const DEFAULT_CONFIG: SimulationConfig = {
   instrument: "TQQQ",
@@ -23,6 +25,7 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   useActualHistory: true,
   underlyingMode: "total_return",
   transactionCost: 0,
+  customEntries: [],
   fxRate: 1,
   fxLabel: "USD",
 };
@@ -46,6 +49,28 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const { data, isLoading, error } = useQuery(marketDataQuery);
   const [config, setConfigState] = useState<SimulationConfig>(DEFAULT_CONFIG);
 
+  // Manual purchase records persist locally so the user keeps their tracking.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ENTRIES_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as CustomEntry[];
+      if (Array.isArray(parsed) && parsed.length) {
+        setConfigState((c) => ({ ...c, customEntries: parsed }));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ENTRIES_KEY, JSON.stringify(config.customEntries));
+    } catch {
+      /* ignore */
+    }
+  }, [config.customEntries]);
+
   const latestDate = data ? data.qqq.dates[data.qqq.dates.length - 1]! : "";
 
   const effectiveConfig = useMemo<SimulationConfig>(() => {
@@ -68,7 +93,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       error: (error as Error) ?? null,
       config: effectiveConfig,
       setConfig: (patch) => setConfigState((c) => ({ ...c, ...patch })),
-      resetConfig: () => setConfigState(DEFAULT_CONFIG),
+      resetConfig: () =>
+        setConfigState((c) => ({ ...DEFAULT_CONFIG, customEntries: c.customEntries })),
       result,
       resultFor: (instrument) => {
         if (!data) return null;

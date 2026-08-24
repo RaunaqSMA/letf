@@ -16,6 +16,7 @@ import { FINANCING_MODEL_META } from "@/lib/sim/financing";
 import { useSimulation } from "@/lib/sim/store";
 import type { FinancingModelId, Frequency } from "@/lib/sim/types";
 import { cn } from "@/lib/utils";
+import { CustomEntriesDialog } from "./CustomEntriesDialog";
 import { InfoTip } from "./primitives";
 
 const PRESET_AMOUNTS = [10, 50, 100, 500, 1000];
@@ -154,10 +155,11 @@ export function ConfigPanel({ onRun }: { onRun?: () => void }) {
               <SelectItem value="quarterly">Quarterly</SelectItem>
               <SelectItem value="yearly">Yearly</SelectItem>
               <SelectItem value="once">One-time</SelectItem>
+              <SelectItem value="custom">Custom (my records)</SelectItem>
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Timing">
+        <Field label="Timing" tip="Ignored in custom mode — your recorded dates are used.">
           <Select value={config.timing} onValueChange={(v) => setConfig({ timing: v as "first" | "last" })}>
             <SelectTrigger className="num">
               <SelectValue />
@@ -169,6 +171,27 @@ export function ConfigPanel({ onRun }: { onRun?: () => void }) {
           </Select>
         </Field>
       </div>
+
+      {config.frequency === "custom" ? (
+        <Field
+          label="My purchase record"
+          tip="Manually track every buy you made. Saved in this browser."
+        >
+          <CustomEntriesDialog
+            entries={config.customEntries}
+            onChange={(customEntries) => setConfig({ customEntries })}
+            minDate="1999-01-04"
+            maxDate={latestDate}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {config.customEntries.length === 0
+              ? "No purchases recorded yet — add entries to run the simulation."
+              : `${config.customEntries.length} purchases · $${config.customEntries
+                  .reduce((s, e) => s + e.amount, 0)
+                  .toLocaleString("en-US")} total`}
+          </p>
+        </Field>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Start date">

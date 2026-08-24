@@ -9,7 +9,7 @@ export interface CustomEntry {
   id: string;
   date: string;
   amount: number;
-  note?: string;
+  note?: string | undefined;
 }
 
 export type ContributionTiming = "first" | "last";

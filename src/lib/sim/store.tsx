@@ -23,6 +23,7 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   useActualHistory: true,
   underlyingMode: "total_return",
   transactionCost: 0,
+  customEntries: [],
   fxRate: 1,
   fxLabel: "USD",
 };

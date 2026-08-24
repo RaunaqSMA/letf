@@ -2,7 +2,15 @@ import type { InstrumentId } from "@/lib/market/types";
 
 export type FinancingModelId = "none" | "fixed" | "riskfree" | "riskfree_spread" | "custom";
 
-export type Frequency = "monthly" | "weekly" | "quarterly" | "yearly" | "once";
+export type Frequency = "monthly" | "weekly" | "quarterly" | "yearly" | "once" | "custom";
+
+/** A manually recorded purchase */
+export interface CustomEntry {
+  id: string;
+  date: string;
+  amount: number;
+  note?: string;
+}
 
 export type ContributionTiming = "first" | "last";
 
@@ -29,6 +37,8 @@ export interface SimulationConfig {
   /** Flat cost per contribution, in currency units */
   transactionCost: number;
   /** Multiplier applied to displayed currency values */
+  /** Manual purchase records, used when frequency === "custom" */
+  customEntries: CustomEntry[];
   fxRate: number;
   fxLabel: string;
 }

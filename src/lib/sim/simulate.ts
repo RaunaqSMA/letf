@@ -105,7 +105,7 @@ export function runSimulation(data: MarketDataset, config: SimulationConfig): Si
       underlyingPrice: daily.underlying[i]!,
       nav: daily.nav[i]!,
       dataType: daily.dataType[i] === 1 ? "ACTUAL" : "SYNTHETIC",
-      contribution: config.contribution,
+      contribution: dca.amounts[k] ?? config.contribution,
       unitsBought: dca.unitsBought[k] ?? 0,
       cumulativeUnits: cumUnits,
       cumulativeContributions: cumContrib,
@@ -117,9 +117,9 @@ export function runSimulation(data: MarketDataset, config: SimulationConfig): Si
 
   const totalContributions = dca.contributions[n - 1]!;
   const finalValue = dca.value[n - 1]!;
-  const flows: CashFlow[] = dca.buyIndices.map((i) => ({
+  const flows: CashFlow[] = dca.buyIndices.map((i, k) => ({
     date: daily.dates[i]!,
-    amount: -config.contribution,
+    amount: -(dca.amounts[k] ?? config.contribution),
   }));
   flows.push({ date: daily.dates[n - 1]!, amount: finalValue });
 

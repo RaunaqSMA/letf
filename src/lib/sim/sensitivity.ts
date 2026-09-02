@@ -114,6 +114,18 @@ export interface StressPath {
 }
 
 /** Hand-built stress paths that history has not (yet) delivered. */
+/**
+ * Shifts every daily return by a constant so the path lands exactly on its
+ * stated total return. Without this, sampling noise makes a "0% drift" decade
+ * finish well away from flat and the label stops describing the scenario.
+ */
+function retarget(returns: number[], targetTotal: number): number[] {
+  let total = 1;
+  for (const r of returns) total *= 1 + r;
+  const shift = Math.pow((1 + targetTotal) / total, 1 / returns.length);
+  return returns.map((r) => (1 + r) * shift - 1);
+}
+
 export function stressPaths(seed = "stress-v2"): StressPath[] {
   const rng = createRng(seed);
   const flatChoppy: number[] = [];
@@ -145,13 +157,13 @@ export function stressPaths(seed = "stress-v2"): StressPath[] {
       label: "Flat but choppy (5y, 35% vol, 0% drift)",
       description:
         "The underlying ends exactly where it started after five turbulent years. This is the scenario where leverage loses the most for the least obvious reason.",
-      returns: flatChoppy,
+      returns: retarget(flatChoppy, 0),
     },
     {
       id: "slow-grind",
       label: "Slow grind down (3y, -25% total, 28% vol)",
       description: "A long, volatile bear market rather than a single crash.",
-      returns: slowGrind,
+      returns: retarget(slowGrind, -0.25),
     },
     {
       id: "one-day-shock",
@@ -164,7 +176,7 @@ export function stressPaths(seed = "stress-v2"): StressPath[] {
       id: "lost-decade",
       label: "Lost decade (10y, 24% vol, 0% drift)",
       description: "Japan-style stagnation with normal volatility.",
-      returns: lostDecade,
+      returns: retarget(lostDecade, 0),
     },
     {
       id: "v-shock",

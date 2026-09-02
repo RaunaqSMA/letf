@@ -35,6 +35,22 @@ export const CRASHES: CrashEvent[] = [
       "Fast and violent: about five weeks from peak to trough, followed by an unusually quick recovery. Short, sharp declines hurt leverage less than long volatile ones.",
   },
   {
+    id: "aug2011",
+    name: "2011 debt-ceiling selloff",
+    start: "2011-07-07",
+    end: "2011-10-03",
+    blurb:
+      "A three-month shock with repeated 4-5% swings in both directions. Short but exceptionally volatile — the classic decay environment.",
+  },
+  {
+    id: "q4_2018",
+    name: "Q4 2018 selloff",
+    start: "2018-10-01",
+    end: "2018-12-24",
+    blurb:
+      "A rapid quarter-long derating into a rate-hiking cycle, recovered within months. Useful as a 'mild' comparison case.",
+  },
+  {
     id: "bear2022",
     name: "2022 bear market",
     start: "2021-11-19",
@@ -60,6 +76,30 @@ export interface CrashStats {
   navRecoveryMonths: number | null;
   portfolioRecoveryDate: string | null;
   portfolioRecoveryMonths: number | null;
+  /** What a DCA investor actually experienced through the event. */
+  dca: CrashDCAExperience;
+}
+
+export interface CrashDCAExperience {
+  /** Units accumulated between the peak and the trough. */
+  unitsBoughtDuring: number;
+  /** Share of all units ever bought that were bought inside this window. */
+  unitsShareOfTotal: number;
+  contributionsDuring: number;
+  /** Average price paid inside the window. */
+  averagePriceDuring: number | null;
+  /** Value at the end of the sample of only the units bought in this window. */
+  terminalValueOfWindowUnits: number;
+  /** Multiple on money invested during the window, measured at sample end. */
+  multipleOnWindowMoney: number | null;
+  /** Worst gap between portfolio value and money contributed, in currency. */
+  worstUnrealisedLoss: number;
+  /** Same gap expressed against contributions at that moment. */
+  worstUnrealisedLossPct: number;
+  /** Trading days spent with the portfolio below total contributions. */
+  daysUnderwater: number;
+  /** Months from the trough until the portfolio again exceeded contributions. */
+  monthsToBreakEvenOnContributions: number | null;
 }
 
 function monthsBetween(a: string, b: string): number {
@@ -89,6 +129,18 @@ export function analyseCrash(result: SimulationResult, event: CrashEvent): Crash
     navRecoveryMonths: null,
     portfolioRecoveryDate: null,
     portfolioRecoveryMonths: null,
+    dca: {
+      unitsBoughtDuring: 0,
+      unitsShareOfTotal: 0,
+      contributionsDuring: 0,
+      averagePriceDuring: null,
+      terminalValueOfWindowUnits: 0,
+      multipleOnWindowMoney: null,
+      worstUnrealisedLoss: 0,
+      worstUnrealisedLossPct: 0,
+      daysUnderwater: 0,
+      monthsToBreakEvenOnContributions: null,
+    },
   };
   if (dates.length === 0) return empty;
   const s = indexAtOrAfter(dates, event.start);
@@ -129,9 +181,59 @@ export function analyseCrash(result: SimulationResult, event: CrashEvent): Crash
   let mixed = false;
   for (let i = s; i <= troughIdx; i++) if (dataType[i] !== sType) mixed = true;
 
+  // --- What the DCA investor lived through ---------------------------------
+  let unitsDuring = 0;
+  let moneyDuring = 0;
+  for (let k = 0; k < result.ledger.length; k++) {
+    const row = result.ledger[k]!;
+    if (row.date < dates[s]! || row.date > dates[e]!) continue;
+    unitsDuring += row.unitsBought;
+    moneyDuring += row.contribution;
+  }
+  const totalUnits = result.daily.dates.length
+    ? (result.ledger[result.ledger.length - 1]?.cumulativeUnits ?? 0)
+    : 0;
+  const finalNav = nav[dates.length - 1]!;
+  const terminalValueOfWindowUnits = unitsDuring * finalNav;
+
+  let worstLoss = 0;
+  let worstLossPct = 0;
+  let daysUnderwater = 0;
+  for (let i = s; i <= e; i++) {
+    const p = portfolio[i]!;
+    const gap = p.value - p.contributions;
+    if (p.contributions > 0 && gap < 0) {
+      daysUnderwater++;
+      if (gap < worstLoss) {
+        worstLoss = gap;
+        worstLossPct = gap / p.contributions;
+      }
+    }
+  }
+  let breakEven: number | null = null;
+  for (let i = portTroughIdx; i < dates.length; i++) {
+    const p = portfolio[i]!;
+    if (p.contributions > 0 && p.value >= p.contributions) {
+      breakEven = monthsBetween(dates[portTroughIdx]!, dates[i]!);
+      break;
+    }
+  }
+
   return {
     event,
     hasData: true,
+    dca: {
+      unitsBoughtDuring: unitsDuring,
+      unitsShareOfTotal: totalUnits > 0 ? unitsDuring / totalUnits : 0,
+      contributionsDuring: moneyDuring,
+      averagePriceDuring: unitsDuring > 0 ? moneyDuring / unitsDuring : null,
+      terminalValueOfWindowUnits,
+      multipleOnWindowMoney: moneyDuring > 0 ? terminalValueOfWindowUnits / moneyDuring : null,
+      worstUnrealisedLoss: worstLoss,
+      worstUnrealisedLossPct: worstLossPct,
+      daysUnderwater,
+      monthsToBreakEvenOnContributions: breakEven,
+    },
     peakDate: dates[s]!,
     troughDate: dates[troughIdx]!,
     underlyingDecline: underlying[troughIdx]! / underlying[s]! - 1,

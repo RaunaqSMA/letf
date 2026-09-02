@@ -125,7 +125,7 @@ function DataPage() {
               <tr className="border-b border-border bg-muted/40">
                 <th className="label-xs px-3 py-2 text-left">Series</th>
                 <th className="label-xs px-3 py-2 text-left">Symbol</th>
-                <th className="label-xs px-3 py-2 text-left">Coverage</th>
+                <th className="label-xs px-3 py-2 text-left">Range</th>
                 <th className="label-xs px-3 py-2 text-right">Observations</th>
                 <th className="label-xs px-3 py-2 text-right">Coverage</th>
                 <th className="label-xs px-3 py-2 text-right">Gaps</th>

@@ -1,7 +1,8 @@
 import { indexAtOrBefore } from "@/lib/market/loader";
 import { INSTRUMENTS, type MarketDataset } from "@/lib/market/types";
 import { buildLeveragedSeries } from "./leverage";
-import type { SimulationConfig } from "./types";
+import { drawdownSummary, seriesStats, yearFraction, cagrOf } from "./metrics";
+import type { CalibrationMode, SimulationConfig } from "./types";
 
 export interface ValidationPoint {
   date: string;
@@ -20,6 +21,59 @@ export interface ValidationResult {
   maxDifference: number;
   from: string;
   to: string;
+  /** Head-to-head aggregate statistics over the overlap period. */
+  comparison: ValidationComparison;
+  /** Drag (annualised) that would align the model with reality. */
+  calibration: CalibrationResult;
+}
+
+export interface ValidationComparison {
+  years: number;
+  syntheticCagr: number | null;
+  actualCagr: number | null;
+  cagrDifference: number | null;
+  syntheticVolatility: number;
+  actualVolatility: number;
+  volatilityDifference: number;
+  syntheticMaxDrawdown: number;
+  actualMaxDrawdown: number;
+  drawdownDifference: number;
+  /** R^2 of daily synthetic vs actual returns. */
+  rSquared: number;
+  /** Slope of actual on synthetic — 1.0 means unbiased scaling. */
+  beta: number;
+  worstDailyDifference: number;
+  /** Share of days where |synthetic - actual| exceeded 25bp. */
+  shareDaysOver25bp: number;
+}
+
+export type { CalibrationMode };
+
+export interface CalibrationResult {
+  /** Annualised drag to add so the model matches actual history. */
+  impliedAnnualDrag: number;
+  /** Drag applied under each mode. */
+  dragByMode: Record<CalibrationMode, number>;
+  conservativeExtra: number;
+  verdict: "good" | "acceptable" | "poor";
+  note: string;
+}
+
+/** Extra annual drag implied by a calibration mode. */
+export function calibrationDrag(
+  mode: CalibrationMode,
+  impliedAnnualDrag: number,
+  conservativeExtra: number,
+): number {
+  switch (mode) {
+    case "calibrated":
+      return impliedAnnualDrag;
+    case "conservative":
+      return impliedAnnualDrag + conservativeExtra;
+    case "theoretical":
+    default:
+      return 0;
+  }
 }
 
 /**
@@ -93,9 +147,68 @@ export function validateModel(
   let maxDiff = 0;
   for (const p of points) if (Math.abs(p.diff) > Math.abs(maxDiff)) maxDiff = p.diff;
 
+  const years = yearFraction(points[0]!.date, last.date);
+  const synStats = seriesStats(
+    points.map((p) => p.date),
+    points.map((p) => p.synthetic),
+  );
+  const actStats = seriesStats(
+    points.map((p) => p.date),
+    points.map((p) => p.actual),
+  );
+  const synDD = drawdownSummary(points.map((p) => p.date), points.map((p) => p.synthetic));
+  const actDD = drawdownSummary(points.map((p) => p.date), points.map((p) => p.actual));
+  const synCagr = cagrOf(points[0]!.synthetic, last.synthetic, years);
+  const actCagr = cagrOf(points[0]!.actual, last.actual, years);
+  let worstDaily = 0;
+  let over25 = 0;
+  for (let i = 0; i < n; i++) {
+    const d = synReturns[i]! - actReturns[i]!;
+    if (Math.abs(d) > Math.abs(worstDaily)) worstDaily = d;
+    if (Math.abs(d) > 0.0025) over25++;
+  }
+  const beta = varS > 0 ? cov / varS : 0;
+  const comparison: ValidationComparison = {
+    years,
+    syntheticCagr: synCagr,
+    actualCagr: actCagr,
+    cagrDifference: synCagr !== null && actCagr !== null ? synCagr - actCagr : null,
+    syntheticVolatility: synStats.volatility,
+    actualVolatility: actStats.volatility,
+    volatilityDifference: synStats.volatility - actStats.volatility,
+    syntheticMaxDrawdown: synDD.maxDrawdown,
+    actualMaxDrawdown: actDD.maxDrawdown,
+    drawdownDifference: synDD.maxDrawdown - actDD.maxDrawdown,
+    rSquared: correlation * correlation,
+    beta,
+    worstDailyDifference: worstDaily,
+    shareDaysOver25bp: n > 0 ? over25 / n : 0,
+  };
+
+  // If the model is optimistic, the implied drag is positive: subtracting it
+  // from synthetic returns would have reproduced actual history.
+  const impliedAnnualDrag = comparison.cagrDifference ?? meanDiff * 252;
+  const absDrag = Math.abs(impliedAnnualDrag);
+  const calibration: CalibrationResult = {
+    impliedAnnualDrag,
+    dragByMode: {
+      theoretical: 0,
+      calibrated: impliedAnnualDrag,
+      conservative: impliedAnnualDrag + config.conservativeExtraDrag,
+    },
+    conservativeExtra: config.conservativeExtraDrag,
+    verdict: correlation > 0.99 && absDrag < 0.02 ? "good" : correlation > 0.97 && absDrag < 0.05 ? "acceptable" : "poor",
+    note:
+      correlation > 0.99 && absDrag < 0.02
+        ? "The reconstruction tracks actual fund returns closely; synthetic history is usable for research, with the usual caveat that it is still modelled."
+        : "The reconstruction diverges materially from actual fund returns. Treat synthetic history as indicative only and prefer the calibrated or conservative mode.",
+  };
+
   return {
     points,
     observations: n,
+    comparison,
+    calibration,
     correlation,
     meanTrackingDifference: meanDiff * 252,
     trackingError,

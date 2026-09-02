@@ -164,15 +164,21 @@ describe("Test 7 — DCA units and portfolio value", () => {
 
 describe("Test 8 — NAV drawdown and portfolio drawdown are independent", () => {
   it("produces different numbers for the same path", () => {
-    const rs = [0, -0.1, -0.1, 0.05, 0.05, 0.05];
+    // 60 flat days, then a crash, then a partial recovery. Monthly DCA keeps
+    // adding cash, so the portfolio's own peak-to-trough differs from NAV's.
+    const rs = new Array(120).fill(0);
+    for (let i = 60; i < 70; i++) rs[i] = -0.03;
+    for (let i = 70; i < 120; i++) rs[i] = 0.004;
     const dates = tradingDates("2001-01-01", rs.length);
     const data = makeDataset(dates, rs);
-    const res = runSimulation(data, makeConfig({ frequency: "weekly", contribution: 100 }));
+    const res = runSimulation(data, makeConfig({ frequency: "monthly", contribution: 100 }));
+    expect(res.contributionCount).toBeGreaterThan(3);
     expect(res.drawdowns.navMaxDrawdown).toBeLessThan(0);
     expect(res.drawdowns.portfolioMaxDrawdown).toBeLessThan(0);
-    expect(res.drawdowns.navMaxDrawdown).not.toBeCloseTo(res.drawdowns.portfolioMaxDrawdown, 6);
+    expect(res.drawdowns.navMaxDrawdown).not.toBeCloseTo(res.drawdowns.portfolioMaxDrawdown, 4);
     // Contribution-relative loss is a third, distinct quantity.
     expect(res.drawdowns.worstContributionRelative).not.toBe(res.drawdowns.navMaxDrawdown);
+    expect(res.drawdowns.worstContributionRelative).not.toBe(res.drawdowns.portfolioMaxDrawdown);
   });
 
   it("measures drawdown against the running peak", () => {

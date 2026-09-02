@@ -82,6 +82,7 @@ function emptyResult(config: SimulationConfig, warnings: string[]): SimulationRe
     worstYear: null,
     monthsBelowContributions: 0,
     warnings,
+    assumptions: [],
   };
 }
 
@@ -289,11 +290,19 @@ export function runSimulation(data: MarketDataset, config: SimulationConfig): Si
       : null,
     monthsBelowContributions: monthsBelow,
     warnings: allWarnings,
+    // Assumption disclosure travels with the result.
+    assumptions: [
+      `Financing: ${financingAssumption}`,
+      `Expenses: ${expenseAssumption}`,
+      `Leverage: ${config.leverage}x daily reset, financing charged on ${(config.leverage - 1).toFixed(1)}x borrowed exposure.`,
+      `Underlying: ${config.underlyingMode === "price_index" ? inst.underlyingIndexLabel + " (price index, dividends excluded)" : inst.underlyingTRLabel + " (total return)"}.`,
+      `History sources: synthetic ${config.useSyntheticHistory ? "ON" : "OFF"}, actual ${inst.id} ${config.useActualHistory ? "ON" : "OFF"}; inception ${inst.inception}.`,
+      `Calibration mode: ${config.calibrationMode}.`,
+      `Extreme-day clipping: ${config.clipExtremeReturns ? `ON at ±${(config.clipLimit * 100).toFixed(0)}%` : "OFF (raw model path)"}.`,
+      `Inflation assumption for real-terms figures: ${(config.inflationRate * 100).toFixed(2)}% p.a.`,
+      `Transaction cost: ${config.transactionCost} per contribution; slippage drag ${(config.slippageDrag * 100).toFixed(2)}% p.a. on synthetic days.`,
+    ],
   };
-
-  // Assumption disclosure travels with the result.
-  result.warnings.push(`Financing assumption: ${financingAssumption}`);
-  result.warnings.push(`Expense assumption: ${expenseAssumption}`);
   return result;
 }
 

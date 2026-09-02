@@ -260,4 +260,6 @@ export interface SimulationResult {
   worstYear: { year: number; return: number } | null;
   monthsBelowContributions: number;
   warnings: string[];
+  /** Every modelling assumption used, surfaced verbatim in the UI. */
+  assumptions: string[];
 }

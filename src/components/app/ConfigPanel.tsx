@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { INSTRUMENTS, type InstrumentId } from "@/lib/market/types";
 import { FINANCING_MODEL_META } from "@/lib/sim/financing";
 import { useSimulation } from "@/lib/sim/store";
-import type { FinancingModelId, Frequency } from "@/lib/sim/types";
+import type { CalibrationMode, FinancingModelId, Frequency, StressTrigger } from "@/lib/sim/types";
 import { cn } from "@/lib/utils";
 import { CustomEntriesDialog } from "./CustomEntriesDialog";
 import { InfoTip } from "./primitives";
@@ -314,6 +314,221 @@ export function ConfigPanel({ onRun }: { onRun?: () => void }) {
             onChange={(e) => setConfig({ leverage: Math.min(5, Math.max(1, Number(e.target.value) || 1)) })}
           />
         </Field>
+      </div>
+
+      {config.financingModel === "stress" ? (
+        <div className="space-y-3 border border-border bg-card p-3">
+          <div className="label-xs">Stress financing</div>
+          <div className="grid grid-cols-3 gap-2">
+            <Field label="Base %">
+              <Input
+                type="number"
+                step="0.05"
+                className="num"
+                value={(config.stressFinancing.baseSpread * 100).toFixed(2)}
+                onChange={(e) =>
+                  setConfig({
+                    stressFinancing: {
+                      ...config.stressFinancing,
+                      baseSpread: Number(e.target.value) / 100,
+                    },
+                  })
+                }
+              />
+            </Field>
+            <Field label="Crisis %">
+              <Input
+                type="number"
+                step="0.05"
+                className="num"
+                value={(config.stressFinancing.crisisSpread * 100).toFixed(2)}
+                onChange={(e) =>
+                  setConfig({
+                    stressFinancing: {
+                      ...config.stressFinancing,
+                      crisisSpread: Number(e.target.value) / 100,
+                    },
+                  })
+                }
+              />
+            </Field>
+            <Field label="Extreme %">
+              <Input
+                type="number"
+                step="0.05"
+                className="num"
+                value={(config.stressFinancing.extremeSpread * 100).toFixed(2)}
+                onChange={(e) =>
+                  setConfig({
+                    stressFinancing: {
+                      ...config.stressFinancing,
+                      extremeSpread: Number(e.target.value) / 100,
+                    },
+                  })
+                }
+              />
+            </Field>
+          </div>
+          <Field label="Trigger" tip="What escalates the spread: how far the underlying is below its peak, or its trailing volatility.">
+            <Select
+              value={config.stressFinancing.trigger}
+              onValueChange={(v) =>
+                setConfig({
+                  stressFinancing: { ...config.stressFinancing, trigger: v as StressTrigger },
+                })
+              }
+            >
+              <SelectTrigger className="num">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="underlying_drawdown">Underlying drawdown</SelectItem>
+                <SelectItem value="trailing_volatility">Trailing volatility</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Crisis level %">
+              <Input
+                type="number"
+                step="1"
+                className="num"
+                value={(config.stressFinancing.crisisLevel * 100).toFixed(0)}
+                onChange={(e) =>
+                  setConfig({
+                    stressFinancing: {
+                      ...config.stressFinancing,
+                      crisisLevel: Number(e.target.value) / 100,
+                    },
+                  })
+                }
+              />
+            </Field>
+            <Field label="Extreme level %">
+              <Input
+                type="number"
+                step="1"
+                className="num"
+                value={(config.stressFinancing.extremeLevel * 100).toFixed(0)}
+                onChange={(e) =>
+                  setConfig({
+                    stressFinancing: {
+                      ...config.stressFinancing,
+                      extremeLevel: Number(e.target.value) / 100,
+                    },
+                  })
+                }
+              />
+            </Field>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field
+          label="Financing shift %"
+          tip="Parallel shift on the financing rate — the sensitivity ladder the methodology requires."
+        >
+          <Input
+            type="number"
+            step="0.5"
+            className="num"
+            value={(config.financingShift * 100).toFixed(2)}
+            onChange={(e) => setConfig({ financingShift: Number(e.target.value) / 100 })}
+          />
+        </Field>
+        <Field
+          label="Slippage drag %"
+          tip="Annualised rebalancing and tracking drag applied to synthetic days only, where no real fund existed."
+        >
+          <Input
+            type="number"
+            step="0.05"
+            min={0}
+            className="num"
+            value={(config.slippageDrag * 100).toFixed(2)}
+            onChange={(e) => setConfig({ slippageDrag: Math.max(0, Number(e.target.value) / 100) })}
+          />
+        </Field>
+      </div>
+
+      <Field
+        label="Synthetic calibration"
+        tip="Theoretical uses the raw equation. Calibrated subtracts the drag implied by the overlap with the real fund. Conservative adds a further penalty."
+      >
+        <Select
+          value={config.calibrationMode}
+          onValueChange={(v) => setConfig({ calibrationMode: v as CalibrationMode })}
+        >
+          <SelectTrigger className="num">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="theoretical">Theoretical (no adjustment)</SelectItem>
+            <SelectItem value="calibrated">Calibrated to actual fund</SelectItem>
+            <SelectItem value="conservative">Conservative (extra drag)</SelectItem>
+          </SelectContent>
+        </Select>
+      </Field>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Starting capital" tip="A one-off lump sum invested on the first trading day of the window.">
+          <Input
+            type="number"
+            min={0}
+            step="100"
+            className="num"
+            value={config.startingCapital}
+            onChange={(e) => setConfig({ startingCapital: Math.max(0, Number(e.target.value) || 0) })}
+          />
+        </Field>
+        <Field label="Contribution growth %" tip="Annual increase in the recurring contribution. Ignored when contributions are inflation-indexed.">
+          <Input
+            type="number"
+            step="0.5"
+            className="num"
+            disabled={config.indexContributionsToInflation}
+            value={(config.contributionGrowth * 100).toFixed(2)}
+            onChange={(e) => setConfig({ contributionGrowth: Number(e.target.value) / 100 })}
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Inflation %" tip="Used for real-terms reporting and, optionally, to index contributions.">
+          <Input
+            type="number"
+            step="0.1"
+            className="num"
+            value={(config.inflationRate * 100).toFixed(2)}
+            onChange={(e) => setConfig({ inflationRate: Number(e.target.value) / 100 })}
+          />
+        </Field>
+        <Field label="Contributions from" tip="Leave blank to start with the simulation window.">
+          <Input
+            type="date"
+            className="num"
+            min="1999-01-04"
+            max={latestDate}
+            value={config.contributionStartDate}
+            onChange={(e) => setConfig({ contributionStartDate: e.target.value })}
+          />
+        </Field>
+      </div>
+
+      <div className="space-y-2">
+        <Toggle
+          label="Index contributions to inflation"
+          tip="Raises each contribution with assumed inflation, keeping the real amount invested constant."
+          checked={config.indexContributionsToInflation}
+          onChange={(v) => setConfig({ indexContributionsToInflation: v })}
+        />
+        <Toggle
+          label="Clip extreme daily returns"
+          tip="Off by default. The engine should not silently hide the days that would have destroyed the fund."
+          checked={config.clipExtremeReturns}
+          onChange={(v) => setConfig({ clipExtremeReturns: v })}
+        />
       </div>
 
       <div className="flex gap-2 pt-1">

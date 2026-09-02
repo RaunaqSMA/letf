@@ -4,9 +4,11 @@ import {
   BarChart3,
   BookOpen,
   Database,
+  Dices,
   Info,
   LineChart,
   SlidersHorizontal,
+  Sigma,
   TrendingDown,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -19,6 +21,8 @@ const NAV = [
   { to: "/compare", label: "Compare", icon: BarChart3 },
   { to: "/crashes", label: "Historical Crashes", icon: TrendingDown },
   { to: "/analysis", label: "Rolling & Start Date", icon: LineChart },
+  { to: "/forecast", label: "Forecast Lab", icon: Dices },
+  { to: "/sensitivity", label: "Sensitivity Lab", icon: Sigma },
   { to: "/methodology", label: "Methodology", icon: BookOpen },
   { to: "/data", label: "Data", icon: Database },
   { to: "/about", label: "About", icon: Info },

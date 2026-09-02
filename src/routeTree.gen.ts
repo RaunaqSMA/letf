@@ -15,7 +15,9 @@ import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CrashesRouteImport } from './routes/crashes'
 import { Route as DataRouteImport } from './routes/data'
+import { Route as ForecastRouteImport } from './routes/forecast'
 import { Route as MethodologyRouteImport } from './routes/methodology'
+import { Route as SensitivityRouteImport } from './routes/sensitivity'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 
 const IndexRoute = IndexRouteImport.update({
@@ -48,9 +50,19 @@ const DataRoute = DataRouteImport.update({
   path: '/data',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForecastRoute = ForecastRouteImport.update({
+  id: '/forecast',
+  path: '/forecast',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MethodologyRoute = MethodologyRouteImport.update({
   id: '/methodology',
   path: '/methodology',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SensitivityRoute = SensitivityRouteImport.update({
+  id: '/sensitivity',
+  path: '/sensitivity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SimulatorRoute = SimulatorRouteImport.update({
@@ -66,7 +78,9 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/crashes': typeof CrashesRoute
   '/data': typeof DataRoute
+  '/forecast': typeof ForecastRoute
   '/methodology': typeof MethodologyRoute
+  '/sensitivity': typeof SensitivityRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesByTo {
@@ -76,7 +90,9 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/crashes': typeof CrashesRoute
   '/data': typeof DataRoute
+  '/forecast': typeof ForecastRoute
   '/methodology': typeof MethodologyRoute
+  '/sensitivity': typeof SensitivityRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesById {
@@ -87,7 +103,9 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/crashes': typeof CrashesRoute
   '/data': typeof DataRoute
+  '/forecast': typeof ForecastRoute
   '/methodology': typeof MethodologyRoute
+  '/sensitivity': typeof SensitivityRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRouteTypes {
@@ -99,7 +117,9 @@ export interface FileRouteTypes {
     | '/compare'
     | '/crashes'
     | '/data'
+    | '/forecast'
     | '/methodology'
+    | '/sensitivity'
     | '/simulator'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -109,7 +129,9 @@ export interface FileRouteTypes {
     | '/compare'
     | '/crashes'
     | '/data'
+    | '/forecast'
     | '/methodology'
+    | '/sensitivity'
     | '/simulator'
   id:
     | '__root__'
@@ -119,7 +141,9 @@ export interface FileRouteTypes {
     | '/compare'
     | '/crashes'
     | '/data'
+    | '/forecast'
     | '/methodology'
+    | '/sensitivity'
     | '/simulator'
   fileRoutesById: FileRoutesById
 }
@@ -130,7 +154,9 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   CrashesRoute: typeof CrashesRoute
   DataRoute: typeof DataRoute
+  ForecastRoute: typeof ForecastRoute
   MethodologyRoute: typeof MethodologyRoute
+  SensitivityRoute: typeof SensitivityRoute
   SimulatorRoute: typeof SimulatorRoute
 }
 
@@ -178,11 +204,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DataRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forecast': {
+      id: '/forecast'
+      path: '/forecast'
+      fullPath: '/forecast'
+      preLoaderRoute: typeof ForecastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/methodology': {
       id: '/methodology'
       path: '/methodology'
       fullPath: '/methodology'
       preLoaderRoute: typeof MethodologyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sensitivity': {
+      id: '/sensitivity'
+      path: '/sensitivity'
+      fullPath: '/sensitivity'
+      preLoaderRoute: typeof SensitivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/simulator': {
@@ -202,7 +242,9 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   CrashesRoute: CrashesRoute,
   DataRoute: DataRoute,
+  ForecastRoute: ForecastRoute,
   MethodologyRoute: MethodologyRoute,
+  SensitivityRoute: SensitivityRoute,
   SimulatorRoute: SimulatorRoute,
 }
 export const routeTree = rootRouteImport

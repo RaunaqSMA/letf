@@ -15,7 +15,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { currency, number as fmtNumber, percent, shortDate, signedPercent } from "@/lib/format";
 import { INSTRUMENTS } from "@/lib/market/types";
-import { dailyCsv, downloadCsv, exportFilename, ledgerCsv, monthlyCsv } from "@/lib/sim/export";
+import {
+  configJson,
+  dailyCsv,
+  downloadCsv,
+  downloadJson,
+  exportFilename,
+  ledgerCsv,
+  monthlyCsv,
+} from "@/lib/sim/export";
 import { useSimulation } from "@/lib/sim/store";
 
 export const Route = createFileRoute("/simulator")({
@@ -125,6 +133,16 @@ function SimulatorPage() {
                   onClick={() => downloadCsv(exportFilename(result, "daily"), dailyCsv(result))}
                 >
                   <Download className="size-3.5" /> Daily
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="num gap-1.5"
+                  onClick={() =>
+                    downloadJson(exportFilename(result, "config", "json"), configJson(result))
+                  }
+                >
+                  <Download className="size-3.5" /> Config
                 </Button>
               </>
             }

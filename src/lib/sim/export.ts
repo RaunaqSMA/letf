@@ -123,3 +123,36 @@ export function monthlyCsv(result: SimulationResult): string {
     rows,
   );
 }
+/** Full reproducibility bundle: config, model version, assumptions, headline results. */
+export function configJson(result: SimulationResult): string {
+  return JSON.stringify(
+    {
+      modelVersion: result.modelVersion,
+      simulationId: result.simulationId,
+      exportedAt: new Date().toISOString(),
+      window: { start: result.startDate, end: result.endDate },
+      config: result.config,
+      assumptions: result.assumptions,
+      headline: {
+        totalContributions: result.totalContributions,
+        finalValue: result.finalValue,
+        profit: result.profit,
+        totalReturn: result.totalReturn,
+        xirr: result.xirr,
+        syntheticShare: result.syntheticShare,
+      },
+    },
+    null,
+    2,
+  );
+}
+
+export function downloadJson(filename: string, json: string) {
+  const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

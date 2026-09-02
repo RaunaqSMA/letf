@@ -10,6 +10,7 @@ import {
   PageHeader,
   Section,
 } from "@/components/app/primitives";
+import { AssumptionsPanel, ResearchConclusion } from "@/components/app/research";
 import { Button } from "@/components/ui/button";
 import { INSTRUMENTS } from "@/lib/market/types";
 import { currency, monthsLabel, monthYear, percent, shortDate, signedPercent } from "@/lib/format";
@@ -203,6 +204,12 @@ function Dashboard() {
             </tbody>
           </table>
         </div>
+      </Section>
+
+      <ResearchConclusion result={result} syntheticShare={result.syntheticShare} />
+
+      <Section title="Assumptions">
+        <AssumptionsPanel result={result} />
       </Section>
 
       <Section title="Risk & consistency" className="pb-12">

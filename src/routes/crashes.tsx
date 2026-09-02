@@ -10,7 +10,8 @@ import {
   PageHeader,
   Section,
 } from "@/components/app/primitives";
-import { currency, monthsLabel, percent, shortDate } from "@/lib/format";
+import { StatGrid } from "@/components/app/research";
+import { currency, monthsLabel, multiple, number as fmtNumber, percent, shortDate } from "@/lib/format";
 import { INSTRUMENTS } from "@/lib/market/types";
 import { analyseCrash, CRASHES } from "@/lib/sim/crashes";
 import { useSimulation } from "@/lib/sim/store";
@@ -109,6 +110,57 @@ function CrashesPage() {
                     sub={
                       s.portfolioRecoveryDate ? shortDate(s.portfolioRecoveryDate) : "still below peak"
                     }
+                  />
+                </div>
+                <div className="mt-4">
+                  <div className="label-xs mb-2">What the DCA investor lived through</div>
+                  <StatGrid
+                    columns={4}
+                    rows={[
+                      {
+                        label: "Units bought in window",
+                        value: fmtNumber(s.dca.unitsBoughtDuring, 3),
+                        hint: `${percent(s.dca.unitsShareOfTotal, 1)} of all units ever bought`,
+                      },
+                      { label: "Money invested in window", value: currency(s.dca.contributionsDuring) },
+                      {
+                        label: "Average price paid",
+                        value:
+                          s.dca.averagePriceDuring === null
+                            ? "—"
+                            : fmtNumber(s.dca.averagePriceDuring, 2),
+                        hint: "NAV units, indexed to 100 at start",
+                      },
+                      {
+                        label: "Those units today",
+                        value: currency(s.dca.terminalValueOfWindowUnits),
+                        tone: "gain",
+                      },
+                      {
+                        label: "Multiple on window money",
+                        value:
+                          s.dca.multipleOnWindowMoney === null
+                            ? "—"
+                            : multiple(s.dca.multipleOnWindowMoney),
+                        tone:
+                          (s.dca.multipleOnWindowMoney ?? 0) >= 1 ? "gain" : "loss",
+                      },
+                      {
+                        label: "Worst unrealised loss",
+                        value: currency(s.dca.worstUnrealisedLoss),
+                        tone: "loss",
+                        hint: `${percent(s.dca.worstUnrealisedLossPct, 1)} below money paid in`,
+                      },
+                      {
+                        label: "Days below contributions",
+                        value: s.dca.daysUnderwater.toLocaleString(),
+                        hint: "Trading days with the account worth less than the cash paid in",
+                      },
+                      {
+                        label: "Break-even after trough",
+                        value: monthsLabel(s.dca.monthsToBreakEvenOnContributions),
+                      },
+                    ]}
                   />
                 </div>
                 {slice.length > 5 ? (

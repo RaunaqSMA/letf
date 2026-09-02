@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { marketDataQuery } from "@/lib/market/loader";
 import { INSTRUMENTS, type InstrumentId, type MarketDataset } from "@/lib/market/types";
+import { DEFAULT_STRESS_FINANCING } from "./financing";
 import { runSimulation } from "./simulate";
 import type { CustomEntry, SimulationConfig, SimulationResult } from "./types";
 
@@ -25,6 +26,20 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   useActualHistory: true,
   underlyingMode: "total_return",
   transactionCost: 0,
+  stressFinancing: DEFAULT_STRESS_FINANCING,
+  financingShift: 0,
+  expenseSchedule: [],
+  slippageDrag: 0,
+  calibrationMode: "theoretical",
+  conservativeExtraDrag: 0.01,
+  clipExtremeReturns: false,
+  clipLimit: 0.9,
+  startingCapital: 0,
+  contributionGrowth: 0,
+  indexContributionsToInflation: false,
+  inflationRate: 0.03,
+  contributionStartDate: "",
+  contributionEndDate: "",
   customEntries: [],
   fxRate: 1,
   fxLabel: "USD",

@@ -214,7 +214,7 @@ function Dashboard() {
           />
           <Metric
             label="Return / volatility"
-            value={result.sharpeLike.toFixed(2)}
+            value={result.sharpe === null ? "—" : result.sharpe.toFixed(2)}
             tip="Crude Sharpe-like ratio: XIRR divided by annualised volatility. No risk-free subtraction."
           />
           <Metric

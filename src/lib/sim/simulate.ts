@@ -1,31 +1,36 @@
+import { indexAtOrBefore } from "@/lib/market/loader";
 import { INSTRUMENTS, type MarketDataset } from "@/lib/market/types";
 import { runDCA } from "./dca";
 import { drawdownEpisodes, monthsBetween } from "./drawdown";
-import { buildLeveragedSeries } from "./leverage";
+import { buildLeveragedSeries, buildPlainSeries, emptySeries } from "./leverage";
+import {
+  calendarYearReturns,
+  drawdownSummary,
+  seriesStats,
+  summariseCalendarYears,
+  yearFraction,
+  type SeriesStats,
+} from "./metrics";
+import { configHash, MODEL_VERSION } from "./model";
 import type {
   DCARow,
+  DrawdownTriad,
   PortfolioPoint,
   SimulationConfig,
   SimulationResult,
 } from "./types";
 import { xirr, type CashFlow } from "./xirr";
 
+function emptyStats(): SeriesStats {
+  return seriesStats([], []);
+}
+
 function emptyResult(config: SimulationConfig, warnings: string[]): SimulationResult {
   return {
     config,
-    daily: {
-      dates: [],
-      underlying: new Float64Array(0),
-      underlyingReturn: new Float64Array(0),
-      financingCost: new Float64Array(0),
-      expenseCost: new Float64Array(0),
-      dailyReturn: new Float64Array(0),
-      nav: new Float64Array(0),
-      peak: new Float64Array(0),
-      drawdown: new Float64Array(0),
-      dataType: new Uint8Array(0),
-      inceptionIndex: -1,
-    },
+    modelVersion: MODEL_VERSION,
+    simulationId: configHash(config),
+    daily: emptySeries(),
     ledger: [],
     portfolio: [],
     totalContributions: 0,
@@ -33,6 +38,32 @@ function emptyResult(config: SimulationConfig, warnings: string[]): SimulationRe
     profit: 0,
     totalReturn: 0,
     xirr: null,
+    dca: {
+      totalContributions: 0,
+      startingCapital: config.startingCapital,
+      finalValue: 0,
+      realFinalValue: 0,
+      profit: 0,
+      totalReturn: 0,
+      units: 0,
+      averagePurchasePrice: 0,
+      xirr: null,
+      twr: null,
+      contributionCount: 0,
+      monthsBelowContributions: 0,
+    },
+    drawdowns: {
+      navMaxDrawdown: 0,
+      navMaxDrawdownDate: "—",
+      portfolioMaxDrawdown: 0,
+      portfolioMaxDrawdownDate: "—",
+      worstContributionRelative: 0,
+      worstContributionRelativeDate: "—",
+      worstContributionShortfall: 0,
+    },
+    navStats: emptyStats(),
+    underlyingStats: emptyStats(),
+    calendarYears: summariseCalendarYears([]),
     maxDrawdown: 0,
     maxDrawdownDate: "—",
     navMaxDrawdown: 0,
@@ -44,57 +75,84 @@ function emptyResult(config: SimulationConfig, warnings: string[]): SimulationRe
     startDate: "—",
     endDate: "—",
     syntheticShare: 0,
+    inceptionDate: INSTRUMENTS[config.instrument].inception,
     volatility: 0,
-    sharpeLike: 0,
+    sharpe: null,
     bestYear: null,
     worstYear: null,
     monthsBelowContributions: 0,
     warnings,
+    assumptions: [],
   };
 }
 
-/** Full pipeline: leveraged NAV -> DCA -> drawdowns -> money-weighted return. */
+/** Full pipeline: leveraged NAV -> DCA -> drawdowns -> risk stats. */
 export function runSimulation(data: MarketDataset, config: SimulationConfig): SimulationResult {
   const inst = INSTRUMENTS[config.instrument];
-  const { daily, warnings } = buildLeveragedSeries(data, config);
+  const { daily, warnings, financingAssumption, expenseAssumption } = buildLeveragedSeries(
+    data,
+    config,
+  );
   const n = daily.dates.length;
   if (n < 2) return emptyResult(config, warnings);
 
   const dca = runDCA(daily, config);
 
-  // Portfolio drawdown is measured on portfolio value, which differs from NAV
-  // drawdown because fresh contributions keep arriving.
+  // Risk-free lookup shared by every Sharpe/Sortino calculation.
+  const riskFreeAt = (date: string): number => {
+    if (data.irx.dates.length === 0) return 0;
+    const i = indexAtOrBefore(data.irx.dates, date);
+    return (i < 0 ? data.irx.close[0]! : data.irx.close[i]!) / 100;
+  };
+
+  // Three separate loss concepts. They are never merged.
   const portfolio: PortfolioPoint[] = new Array(n);
   let peak = 0;
   let maxDD = 0;
   let maxDDDate = daily.dates[0]!;
+  let worstRel = 0;
+  let worstRelDate = daily.dates[0]!;
+  let worstShortfall = 0;
+  const t0 = daily.dates[0]!;
   for (let i = 0; i < n; i++) {
     const v = dca.value[i]!;
+    const c = dca.contributions[i]!;
     if (v > peak) peak = v;
     const dd = peak > 0 ? v / peak - 1 : 0;
     if (dd < maxDD) {
       maxDD = dd;
       maxDDDate = daily.dates[i]!;
     }
+    const rel = c > 0 ? v / c - 1 : 0;
+    if (c > 0 && rel < worstRel) {
+      worstRel = rel;
+      worstRelDate = daily.dates[i]!;
+      worstShortfall = v - c;
+    }
+    const yrs = yearFraction(t0, daily.dates[i]!);
     portfolio[i] = {
       date: daily.dates[i]!,
       value: v,
-      contributions: dca.contributions[i]!,
-      profit: v - dca.contributions[i]!,
+      contributions: c,
+      profit: v - c,
       drawdown: dd,
       navDrawdown: daily.drawdown[i]!,
+      contributionRelative: rel,
+      realValue: v / Math.pow(1 + config.inflationRate, yrs),
       dataType: daily.dataType[i] === 1 ? "ACTUAL" : "SYNTHETIC",
     };
   }
 
-  let navMaxDD = 0;
-  let navMaxDDDate = daily.dates[0]!;
-  for (let i = 0; i < n; i++) {
-    if (daily.drawdown[i]! < navMaxDD) {
-      navMaxDD = daily.drawdown[i]!;
-      navMaxDDDate = daily.dates[i]!;
-    }
-  }
+  const navDD = drawdownSummary(daily.dates, daily.nav);
+  const drawdowns: DrawdownTriad = {
+    navMaxDrawdown: navDD.maxDrawdown,
+    navMaxDrawdownDate: navDD.maxDrawdownDate,
+    portfolioMaxDrawdown: maxDD,
+    portfolioMaxDrawdownDate: maxDDDate,
+    worstContributionRelative: worstRel,
+    worstContributionRelativeDate: worstRelDate,
+    worstContributionShortfall: worstShortfall,
+  };
 
   const ledger: DCARow[] = dca.buyIndices.map((i, k) => {
     const cumUnits = dca.units[i]!;
@@ -112,6 +170,7 @@ export function runSimulation(data: MarketDataset, config: SimulationConfig): Si
       portfolioValue: value,
       profitLoss: value - cumContrib,
       portfolioReturn: cumContrib > 0 ? value / cumContrib - 1 : 0,
+      averageCost: dca.averageCostAt[k] ?? 0,
     };
   });
 
@@ -137,38 +196,18 @@ export function runSimulation(data: MarketDataset, config: SimulationConfig): Si
     }
   }
 
-  // NAV statistics
-  let sum = 0;
-  let sumSq = 0;
-  let count = 0;
-  for (let i = 1; i < n; i++) {
-    const r = daily.dailyReturn[i]!;
-    if (!isFinite(r)) continue;
-    sum += r;
-    sumSq += r * r;
-    count++;
-  }
-  const mean = count ? sum / count : 0;
-  const variance = count > 1 ? sumSq / count - mean * mean : 0;
-  const volatility = Math.sqrt(Math.max(0, variance)) * Math.sqrt(252);
-  const cagr =
-    Math.pow(daily.nav[n - 1]! / daily.nav[0]!, 365 / Math.max(1, dayDiff(daily.dates[0]!, daily.dates[n - 1]!))) - 1;
-  const sharpeLike = volatility > 0 ? cagr / volatility : 0;
+  const navStats = seriesStats(daily.dates, daily.nav, riskFreeAt);
+  const underKey =
+    config.underlyingMode === "price_index" ? inst.underlyingIndex : inst.underlyingTR;
+  const plain = buildPlainSeries(
+    data[underKey].dates,
+    data[underKey].adjClose,
+    daily.dates[0]!,
+    daily.dates[n - 1]!,
+  );
+  const underlyingStats = seriesStats(plain.dates, plain.nav, riskFreeAt);
 
-  const yearly = new Map<number, { first: number; last: number }>();
-  for (let i = 0; i < n; i++) {
-    const y = Number(daily.dates[i]!.slice(0, 4));
-    const cur = yearly.get(y);
-    if (!cur) yearly.set(y, { first: daily.nav[i]!, last: daily.nav[i]! });
-    else cur.last = daily.nav[i]!;
-  }
-  let bestYear: SimulationResult["bestYear"] = null;
-  let worstYear: SimulationResult["worstYear"] = null;
-  for (const [year, v] of yearly) {
-    const ret = v.last / v.first - 1;
-    if (!bestYear || ret > bestYear.return) bestYear = { year, return: ret };
-    if (!worstYear || ret < worstYear.return) worstYear = { year, return: ret };
-  }
+  const calendarYears = summariseCalendarYears(calendarYearReturns(daily.dates, daily.nav));
 
   let monthsBelow = 0;
   let lastMonth = "";
@@ -188,9 +227,19 @@ export function runSimulation(data: MarketDataset, config: SimulationConfig): Si
       `Synthetic history is off, so the simulation starts at the actual ${inst.id} inception (${inst.inception}) instead of ${config.startDate}.`,
     );
   }
+  if (navStats.sampleTooShort) {
+    allWarnings.push(
+      "Fewer than one year of trading days in the window — volatility, Sharpe, skewness and kurtosis are not statistically meaningful and are shown for completeness only.",
+    );
+  }
 
-  return {
+  const years = yearFraction(daily.dates[0]!, daily.dates[n - 1]!);
+  const realFinalValue = finalValue / Math.pow(1 + config.inflationRate, years);
+
+  const result: SimulationResult = {
     config,
+    modelVersion: MODEL_VERSION,
+    simulationId: configHash(config),
     daily,
     ledger,
     portfolio,
@@ -199,10 +248,30 @@ export function runSimulation(data: MarketDataset, config: SimulationConfig): Si
     profit: finalValue - totalContributions,
     totalReturn: totalContributions > 0 ? finalValue / totalContributions - 1 : 0,
     xirr: xirr(flows),
+    dca: {
+      totalContributions,
+      startingCapital: config.startingCapital,
+      finalValue,
+      realFinalValue,
+      profit: finalValue - totalContributions,
+      totalReturn: totalContributions > 0 ? finalValue / totalContributions - 1 : 0,
+      units: dca.units[n - 1]!,
+      averagePurchasePrice:
+        dca.units[n - 1]! > 0 ? dca.invested[n - 1]! / dca.units[n - 1]! : 0,
+      xirr: xirr(flows),
+      // Time-weighted return = the NAV path's own CAGR, independent of timing.
+      twr: navStats.cagr,
+      contributionCount: dca.buyIndices.length,
+      monthsBelowContributions: monthsBelow,
+    },
+    drawdowns,
+    navStats,
+    underlyingStats,
+    calendarYears,
     maxDrawdown: maxDD,
     maxDrawdownDate: maxDDDate,
-    navMaxDrawdown: navMaxDD,
-    navMaxDrawdownDate: navMaxDDDate,
+    navMaxDrawdown: navDD.maxDrawdown,
+    navMaxDrawdownDate: navDD.maxDrawdownDate,
     episodes,
     longestRecoveryMonths,
     longestRecoveryOngoing,
@@ -210,13 +279,31 @@ export function runSimulation(data: MarketDataset, config: SimulationConfig): Si
     startDate: daily.dates[0]!,
     endDate: daily.dates[n - 1]!,
     syntheticShare: syntheticDays / n,
-    volatility,
-    sharpeLike,
-    bestYear,
-    worstYear,
+    inceptionDate: inst.inception,
+    volatility: navStats.volatility,
+    sharpe: navStats.sharpe,
+    bestYear: calendarYears.best
+      ? { year: calendarYears.best.year, return: calendarYears.best.return! }
+      : null,
+    worstYear: calendarYears.worst
+      ? { year: calendarYears.worst.year, return: calendarYears.worst.return! }
+      : null,
     monthsBelowContributions: monthsBelow,
     warnings: allWarnings,
+    // Assumption disclosure travels with the result.
+    assumptions: [
+      `Financing: ${financingAssumption}`,
+      `Expenses: ${expenseAssumption}`,
+      `Leverage: ${config.leverage}x daily reset, financing charged on ${(config.leverage - 1).toFixed(1)}x borrowed exposure.`,
+      `Underlying: ${config.underlyingMode === "price_index" ? inst.underlyingIndexLabel + " (price index, dividends excluded)" : inst.underlyingTRLabel + " (total return)"}.`,
+      `History sources: synthetic ${config.useSyntheticHistory ? "ON" : "OFF"}, actual ${inst.id} ${config.useActualHistory ? "ON" : "OFF"}; inception ${inst.inception}.`,
+      `Calibration mode: ${config.calibrationMode}.`,
+      `Extreme-day clipping: ${config.clipExtremeReturns ? `ON at ±${(config.clipLimit * 100).toFixed(0)}%` : "OFF (raw model path)"}.`,
+      `Inflation assumption for real-terms figures: ${(config.inflationRate * 100).toFixed(2)}% p.a.`,
+      `Transaction cost: ${config.transactionCost} per contribution; slippage drag ${(config.slippageDrag * 100).toFixed(2)}% p.a. on synthetic days.`,
+    ],
   };
+  return result;
 }
 
 export function dayDiff(a: string, b: string): number {

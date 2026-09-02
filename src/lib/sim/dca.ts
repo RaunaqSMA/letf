@@ -51,10 +51,15 @@ export interface DCAPath {
   units: Float64Array;
   contributions: Float64Array;
   value: Float64Array;
+  /** Cumulative cash actually invested after transaction costs. */
+  invested: Float64Array;
   buyIndices: number[];
   unitsBought: number[];
   /** Contribution amount for each buy index */
   amounts: number[];
+  /** Volume-weighted average NAV paid, after each buy. */
+  averageCostAt: number[];
+  totalTransactionCost: number;
 }
 
 /** Maps manual entries onto the first trading day on/after each entry date. */
@@ -85,48 +90,124 @@ export function customIndices(
   return out;
 }
 
-/** Runs contribution-based DCA over a precomputed NAV path. */
-export function runDCA(
-  daily: Pick<DailySeries, "dates" | "nav">,
-  config: Pick<
-    SimulationConfig,
-    "contribution" | "frequency" | "timing" | "transactionCost" | "customEntries"
-  >,
-): DCAPath {
+export type DcaConfig = Pick<
+  SimulationConfig,
+  | "contribution"
+  | "frequency"
+  | "timing"
+  | "transactionCost"
+  | "customEntries"
+  | "startingCapital"
+  | "contributionGrowth"
+  | "indexContributionsToInflation"
+  | "inflationRate"
+  | "contributionStartDate"
+  | "contributionEndDate"
+>;
+
+/**
+ * Runs contribution-based DCA over a precomputed NAV path.
+ *
+ * Contribution schedule rules, all explicit:
+ *  - `startingCapital` is invested on the first trading day of the window.
+ *  - recurring contributions respect `contributionStartDate` / `contributionEndDate`.
+ *  - the recurring amount grows at `contributionGrowth` (or `inflationRate`
+ *    when contributions are indexed to inflation), compounded annually from
+ *    the first recurring contribution.
+ *  - `transactionCost` is deducted from each contribution before units are
+ *    bought, so contributions and invested cash are tracked separately.
+ */
+export function runDCA(daily: Pick<DailySeries, "dates" | "nav">, config: DcaConfig): DCAPath {
   const n = daily.dates.length;
   const units = new Float64Array(n);
   const contributions = new Float64Array(n);
+  const invested = new Float64Array(n);
   const value = new Float64Array(n);
+  if (n === 0) {
+    return {
+      units,
+      contributions,
+      value,
+      invested,
+      buyIndices: [],
+      unitsBought: [],
+      amounts: [],
+      averageCostAt: [],
+      totalTransactionCost: 0,
+    };
+  }
+
   const custom = config.frequency === "custom";
   const customHits = custom ? customIndices(daily.dates, config.customEntries ?? []) : [];
-  const buyIndices = custom
+  const growth = config.indexContributionsToInflation
+    ? config.inflationRate
+    : config.contributionGrowth;
+
+  const from = config.contributionStartDate || daily.dates[0]!;
+  const to = config.contributionEndDate || daily.dates[n - 1]!;
+
+  const scheduled = custom
     ? customHits.map((h) => h.index)
-    : contributionIndices(daily.dates, config.frequency, config.timing);
+    : contributionIndices(daily.dates, config.frequency, config.timing).filter((i) => {
+        const d = daily.dates[i]!;
+        return d >= from && d <= to;
+      });
+
   const amountAt = new Map<number, number>();
   if (custom) {
     for (const h of customHits) amountAt.set(h.index, (amountAt.get(h.index) ?? 0) + h.amount);
+  } else if (scheduled.length > 0) {
+    const anchor = Date.parse(daily.dates[scheduled[0]!]!);
+    for (const i of scheduled) {
+      const yrs = (Date.parse(daily.dates[i]!) - anchor) / (365 * 86400000);
+      const amt = config.contribution * Math.pow(1 + growth, yrs);
+      amountAt.set(i, (amountAt.get(i) ?? 0) + amt);
+    }
   }
-  const buySet = new Set(buyIndices);
+  if (config.startingCapital > 0) {
+    amountAt.set(0, (amountAt.get(0) ?? 0) + config.startingCapital);
+    if (!scheduled.includes(0)) scheduled.unshift(0);
+  }
+
+  const buySet = new Set(scheduled);
+  const uniqueBuyIndices = [...buySet].sort((a, b) => a - b);
   const unitsBought: number[] = [];
   const amounts: number[] = [];
+  const averageCostAt: number[] = [];
 
   let cumUnits = 0;
   let cumContrib = 0;
+  let cumInvested = 0;
+  let txCost = 0;
   for (let i = 0; i < n; i++) {
     if (buySet.has(i)) {
       const price = daily.nav[i]!;
-      const amount = custom ? (amountAt.get(i) ?? 0) : config.contribution;
-      const invested = Math.max(0, amount - config.transactionCost);
-      const bought = price > 0 ? invested / price : 0;
+      const amount = amountAt.get(i) ?? 0;
+      const cost = amount > 0 ? Math.min(config.transactionCost, amount) : 0;
+      const investedNow = Math.max(0, amount - cost);
+      const bought = price > 0 ? investedNow / price : 0;
       cumUnits += bought;
       cumContrib += amount;
+      cumInvested += investedNow;
+      txCost += cost;
       unitsBought.push(bought);
       amounts.push(amount);
+      averageCostAt.push(cumUnits > 0 ? cumInvested / cumUnits : 0);
     }
     units[i] = cumUnits;
     contributions[i] = cumContrib;
+    invested[i] = cumInvested;
     value[i] = cumUnits * daily.nav[i]!;
   }
-  const uniqueBuyIndices = [...buySet].sort((a, b) => a - b);
-  return { units, contributions, value, buyIndices: uniqueBuyIndices, unitsBought, amounts };
+  return {
+    units,
+    contributions,
+    value,
+    invested,
+    buyIndices: uniqueBuyIndices,
+    unitsBought,
+    amounts,
+    averageCostAt,
+    totalTransactionCost: txCost,
+  };
 }

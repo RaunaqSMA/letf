@@ -19,6 +19,7 @@ import { Route as ForecastRouteImport } from './routes/forecast'
 import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as SensitivityRouteImport } from './routes/sensitivity'
 import { Route as SimulatorRouteImport } from './routes/simulator'
+import { Route as ApiPublicMarketLatestRouteImport } from './routes/api/public/market-latest'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const SimulatorRoute = SimulatorRouteImport.update({
   path: '/simulator',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMarketLatestRoute = ApiPublicMarketLatestRouteImport.update({
+  id: '/api/public/market-latest',
+  path: '/api/public/market-latest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/methodology': typeof MethodologyRoute
   '/sensitivity': typeof SensitivityRoute
   '/simulator': typeof SimulatorRoute
+  '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/methodology': typeof MethodologyRoute
   '/sensitivity': typeof SensitivityRoute
   '/simulator': typeof SimulatorRoute
+  '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/methodology': typeof MethodologyRoute
   '/sensitivity': typeof SensitivityRoute
   '/simulator': typeof SimulatorRoute
+  '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/methodology'
     | '/sensitivity'
     | '/simulator'
+    | '/api/public/market-latest'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/methodology'
     | '/sensitivity'
     | '/simulator'
+    | '/api/public/market-latest'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/methodology'
     | '/sensitivity'
     | '/simulator'
+    | '/api/public/market-latest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   MethodologyRoute: typeof MethodologyRoute
   SensitivityRoute: typeof SensitivityRoute
   SimulatorRoute: typeof SimulatorRoute
+  ApiPublicMarketLatestRoute: typeof ApiPublicMarketLatestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SimulatorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/market-latest': {
+      id: '/api/public/market-latest'
+      path: '/api/public/market-latest'
+      fullPath: '/api/public/market-latest'
+      preLoaderRoute: typeof ApiPublicMarketLatestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   MethodologyRoute: MethodologyRoute,
   SensitivityRoute: SensitivityRoute,
   SimulatorRoute: SimulatorRoute,
+  ApiPublicMarketLatestRoute: ApiPublicMarketLatestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

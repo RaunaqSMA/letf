@@ -3,6 +3,9 @@ import type { MarketDataset, MarketSeries, QualityIssue, SeriesKey } from "./typ
 const KEYS: SeriesKey[] = ["ndx", "spx", "qqq", "spy", "tqqq", "spxl", "irx"];
 
 let cache: MarketDataset | null = null;
+let cachedAt = 0;
+/** How long a merged dataset stays fresh before the live top-up is re-fetched. */
+const CACHE_TTL_MS = 30 * 60 * 1000;
 
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(path);

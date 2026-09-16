@@ -39,7 +39,7 @@ function mergeLive(series: MarketSeries, live: LiveBar | undefined): MarketSerie
 
 /** Loads every bundled market series once and tops it up with live daily bars. */
 export async function loadMarketData(): Promise<MarketDataset> {
-  if (cache) return cache;
+  if (cache && Date.now() - cachedAt < CACHE_TTL_MS) return cache;
   const [series, issues] = await Promise.all([
     Promise.all(KEYS.map((k) => getJson<MarketSeries>(`/data/${k}.json`))),
     getJson<QualityIssue[]>("/data/quality-issues.json"),
@@ -61,6 +61,7 @@ export async function loadMarketData(): Promise<MarketDataset> {
     out[k] = mergeLive(series[i]!, live[k]);
   });
   cache = out;
+  cachedAt = Date.now();
   return out;
 }
 

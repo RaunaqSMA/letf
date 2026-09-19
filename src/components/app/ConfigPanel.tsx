@@ -16,7 +16,7 @@ import { FINANCING_MODEL_META } from "@/lib/sim/financing";
 import { useSimulation } from "@/lib/sim/store";
 import type { CalibrationMode, FinancingModelId, Frequency, StressTrigger } from "@/lib/sim/types";
 import { cn } from "@/lib/utils";
-import { CustomEntriesDialog } from "./CustomEntriesDialog";
+import { MyRecordsPanel } from "@/components/portfolio/MyRecordsPanel";
 import { InfoTip } from "./primitives";
 
 const PRESET_AMOUNTS = [10, 50, 100, 500, 1000];
@@ -174,22 +174,10 @@ export function ConfigPanel({ onRun }: { onRun?: () => void }) {
 
       {config.frequency === "custom" ? (
         <Field
-          label="My purchase record"
-          tip="Manually track every buy you made. Saved in this browser."
+          label="My records"
+          tip="Replay the buys you actually made. Temporary records stay in this browser; saved records live in your account."
         >
-          <CustomEntriesDialog
-            entries={config.customEntries}
-            onChange={(customEntries) => setConfig({ customEntries })}
-            minDate="1999-01-04"
-            maxDate={latestDate}
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            {config.customEntries.length === 0
-              ? "No purchases recorded yet — add entries to run the simulation."
-              : `${config.customEntries.length} purchases · $${config.customEntries
-                  .reduce((s, e) => s + e.amount, 0)
-                  .toLocaleString("en-US")} total`}
-          </p>
+          <MyRecordsPanel />
         </Field>
       ) : null}
 

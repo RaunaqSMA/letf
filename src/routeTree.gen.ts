@@ -16,8 +16,12 @@ import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CrashesRouteImport } from './routes/crashes'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as ForecastRouteImport } from './routes/forecast'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MethodologyRouteImport } from './routes/methodology'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SensitivityRouteImport } from './routes/sensitivity'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as ApiPublicMarketLatestRouteImport } from './routes/api/public/market-latest'
 
@@ -56,14 +60,34 @@ const ForecastRoute = ForecastRouteImport.update({
   path: '/forecast',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MethodologyRoute = MethodologyRouteImport.update({
   id: '/methodology',
   path: '/methodology',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SensitivityRoute = SensitivityRouteImport.update({
   id: '/sensitivity',
   path: '/sensitivity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SimulatorRoute = SimulatorRouteImport.update({
@@ -85,8 +109,12 @@ export interface FileRoutesByFullPath {
   '/crashes': typeof CrashesRoute
   '/data': typeof DataRoute
   '/forecast': typeof ForecastRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/methodology': typeof MethodologyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
+  '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
 }
@@ -98,8 +126,12 @@ export interface FileRoutesByTo {
   '/crashes': typeof CrashesRoute
   '/data': typeof DataRoute
   '/forecast': typeof ForecastRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/methodology': typeof MethodologyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
+  '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
 }
@@ -112,8 +144,12 @@ export interface FileRoutesById {
   '/crashes': typeof CrashesRoute
   '/data': typeof DataRoute
   '/forecast': typeof ForecastRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/methodology': typeof MethodologyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
+  '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
 }
@@ -127,8 +163,12 @@ export interface FileRouteTypes {
     | '/crashes'
     | '/data'
     | '/forecast'
+    | '/forgot-password'
+    | '/login'
     | '/methodology'
+    | '/reset-password'
     | '/sensitivity'
+    | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
   fileRoutesByTo: FileRoutesByTo
@@ -140,8 +180,12 @@ export interface FileRouteTypes {
     | '/crashes'
     | '/data'
     | '/forecast'
+    | '/forgot-password'
+    | '/login'
     | '/methodology'
+    | '/reset-password'
     | '/sensitivity'
+    | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
   id:
@@ -153,8 +197,12 @@ export interface FileRouteTypes {
     | '/crashes'
     | '/data'
     | '/forecast'
+    | '/forgot-password'
+    | '/login'
     | '/methodology'
+    | '/reset-password'
     | '/sensitivity'
+    | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
   fileRoutesById: FileRoutesById
@@ -167,8 +215,12 @@ export interface RootRouteChildren {
   CrashesRoute: typeof CrashesRoute
   DataRoute: typeof DataRoute
   ForecastRoute: typeof ForecastRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
   MethodologyRoute: typeof MethodologyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SensitivityRoute: typeof SensitivityRoute
+  SignupRoute: typeof SignupRoute
   SimulatorRoute: typeof SimulatorRoute
   ApiPublicMarketLatestRoute: typeof ApiPublicMarketLatestRoute
 }
@@ -224,6 +276,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForecastRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/methodology': {
       id: '/methodology'
       path: '/methodology'
@@ -231,11 +297,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MethodologyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sensitivity': {
       id: '/sensitivity'
       path: '/sensitivity'
       fullPath: '/sensitivity'
       preLoaderRoute: typeof SensitivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/simulator': {
@@ -263,8 +343,12 @@ const rootRouteChildren: RootRouteChildren = {
   CrashesRoute: CrashesRoute,
   DataRoute: DataRoute,
   ForecastRoute: ForecastRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
   MethodologyRoute: MethodologyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SensitivityRoute: SensitivityRoute,
+  SignupRoute: SignupRoute,
   SimulatorRoute: SimulatorRoute,
   ApiPublicMarketLatestRoute: ApiPublicMarketLatestRoute,
 }

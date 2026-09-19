@@ -1,5 +1,5 @@
 import type { CustomEntry } from "@/lib/sim/types";
-import type { Transaction } from "./types";
+import type { Transaction, TransactionInput } from "./types";
 
 export interface RecordMapping {
   entries: CustomEntry[];
@@ -52,24 +52,34 @@ export function transactionsToCustomEntries(
   return { entries, skipped };
 }
 
-/** Temporary browser records → database inputs, for the post-login import. */
+/**
+ * Temporary browser records → database inputs, for the explicit post-login
+ * import. A temporary record only stores a cash amount, so the historical
+ * close for that date is used as the price when it is available.
+ */
 export function customEntriesToTransactionInputs(
   entries: CustomEntry[],
-  opts: { symbol: string; currency?: string },
-) {
+  opts: {
+    symbol: string;
+    currency?: string;
+    priceAt?: (date: string) => number | null;
+  },
+): TransactionInput[] {
   return entries
     .filter((e) => e.amount > 0 && e.date)
-    .map((e) => ({
-      symbol: opts.symbol.toUpperCase(),
-      asset_type: "ETF" as const,
-      transaction_type: "BUY" as const,
-      transaction_date: e.date,
-      // A temporary record only stores the cash amount, so one "unit" of cash
-      // is imported at price 1 unless the user edits it later.
-      quantity: e.amount,
-      price: 1,
-      fees: 0,
-      currency: (opts.currency ?? "USD").toUpperCase(),
-      notes: e.note ?? "Imported temporary record",
-    }));
+    .map((e) => {
+      const price = opts.priceAt?.(e.date) ?? null;
+      const quantity = price && price > 0 ? e.amount / price : 1;
+      return {
+        symbol: opts.symbol.toUpperCase(),
+        asset_type: "ETF" as const,
+        transaction_type: "BUY" as const,
+        transaction_date: e.date,
+        quantity,
+        price: price && price > 0 ? price : e.amount,
+        fees: 0,
+        currency: (opts.currency ?? "USD").toUpperCase(),
+        notes: e.note ?? "Imported temporary record",
+      };
+    });
 }

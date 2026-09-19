@@ -10,6 +10,21 @@ export function currency(value: number, opts: { decimals?: number; compact?: boo
   }).format(value);
 }
 
+/** Formats an amount in its own recorded currency — never converts. */
+export function money(value: number | null, code = "USD", decimals = 2): string {
+  if (value === null || !isFinite(value)) return "—";
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+      maximumFractionDigits: decimals,
+      minimumFractionDigits: decimals,
+    }).format(value);
+  } catch {
+    return `${code} ${value.toFixed(decimals)}`;
+  }
+}
+
 export function percent(value: number | null, decimals = 1): string {
   if (value === null || !isFinite(value)) return "—";
   return `${(value * 100).toFixed(decimals)}%`;

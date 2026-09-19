@@ -98,8 +98,14 @@ export interface SimulationConfig {
   contributionStartDate: string;
   /** Contributions stop after this date (blank = window end). */
   contributionEndDate: string;
-  /** Manual purchase records, used when frequency === "custom" */
+  /** Temporary purchase records held in this browser, used when frequency === "custom" */
   customEntries: CustomEntry[];
+  /** Where custom-mode records come from: this browser, or the signed-in account. */
+  recordSource: "temporary" | "saved";
+  /** Saved portfolio replayed in custom mode when recordSource === "saved". */
+  recordPortfolioId: string;
+  /** Saved records mapped from the database (never persisted locally). */
+  savedEntries: CustomEntry[];
   fxRate: number;
   fxLabel: string;
 }

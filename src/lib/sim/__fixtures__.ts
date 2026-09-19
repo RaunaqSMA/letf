@@ -105,5 +105,5 @@ export function makeConfig(patch: Partial<SimulationConfig> = {}): SimulationCon
     fxRate: 1,
     fxLabel: "USD",
     ...patch,
-  };
+  } as SimulationConfig;
 }

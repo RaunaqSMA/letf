@@ -10,14 +10,17 @@ import {
   SlidersHorizontal,
   Sigma,
   TrendingDown,
+  Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { UserMenu } from "@/components/app/UserMenu";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: Activity, exact: true },
   { to: "/simulator", label: "Simulator", icon: SlidersHorizontal },
+  { to: "/records", label: "Records", icon: Wallet },
   { to: "/compare", label: "Compare", icon: BarChart3 },
   { to: "/crashes", label: "Historical Crashes", icon: TrendingDown },
   { to: "/analysis", label: "Rolling & Start Date", icon: LineChart },

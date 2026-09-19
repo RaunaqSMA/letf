@@ -44,7 +44,7 @@ function NavItems({ compact = false }: { compact?: boolean }) {
             to={item.to}
             className={cn(
               "flex items-center gap-2.5 rounded-sm px-3 py-2 text-sm transition-colors",
-              compact ? "flex-col gap-1 px-2 py-1.5 text-[10px]" : "",
+              compact ? "min-w-16 shrink-0 flex-col gap-1 px-2 py-1.5 text-[10px]" : "",
               active
                 ? "bg-sidebar-accent text-sidebar-primary"
                 : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",

@@ -92,9 +92,15 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const latestDate = data ? data.qqq.dates[data.qqq.dates.length - 1]! : "";
 
   const effectiveConfig = useMemo<SimulationConfig>(() => {
-    if (!data) return config;
-    const end = config.endDate > latestDate ? latestDate : config.endDate;
-    return { ...config, endDate: end };
+    // In custom mode the engine always reads `customEntries`; saved-account
+    // records are swapped in here so temporary browser records stay untouched.
+    const withRecords =
+      config.recordSource === "saved"
+        ? { ...config, customEntries: config.savedEntries }
+        : config;
+    if (!data) return withRecords;
+    const end = withRecords.endDate > latestDate ? latestDate : withRecords.endDate;
+    return { ...withRecords, endDate: end };
   }, [config, data, latestDate]);
 
   const result = useMemo(() => {

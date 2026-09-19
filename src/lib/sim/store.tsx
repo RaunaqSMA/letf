@@ -41,6 +41,9 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   contributionStartDate: "",
   contributionEndDate: "",
   customEntries: [],
+  recordSource: "temporary",
+  recordPortfolioId: "",
+  savedEntries: [],
   fxRate: 1,
   fxLabel: "USD",
 };

@@ -26,6 +26,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as ApiPublicMarketLatestRouteImport } from './routes/api/public/market-latest'
+import { Route as ApiPublicQuotesRouteImport } from './routes/api/public/quotes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -112,6 +113,11 @@ const ApiPublicMarketLatestRoute = ApiPublicMarketLatestRouteImport.update({
   path: '/api/public/market-latest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicQuotesRoute = ApiPublicQuotesRouteImport.update({
+  id: '/api/public/quotes',
+  path: '/api/public/quotes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
+  '/api/public/quotes': typeof ApiPublicQuotesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
+  '/api/public/quotes': typeof ApiPublicQuotesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
+  '/api/public/quotes': typeof ApiPublicQuotesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
+    | '/api/public/quotes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
+    | '/api/public/quotes'
   id:
     | '__root__'
     | '/'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
+    | '/api/public/quotes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -249,6 +261,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SimulatorRoute: typeof SimulatorRoute
   ApiPublicMarketLatestRoute: typeof ApiPublicMarketLatestRoute
+  ApiPublicQuotesRoute: typeof ApiPublicQuotesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -372,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMarketLatestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/quotes': {
+      id: '/api/public/quotes'
+      path: '/api/public/quotes'
+      fullPath: '/api/public/quotes'
+      preLoaderRoute: typeof ApiPublicQuotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -393,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SimulatorRoute: SimulatorRoute,
   ApiPublicMarketLatestRoute: ApiPublicMarketLatestRoute,
+  ApiPublicQuotesRoute: ApiPublicQuotesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

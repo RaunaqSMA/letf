@@ -33,6 +33,7 @@ import {
   valueHoldings,
 } from "@/lib/portfolio/portfolioCalculations";
 import { latestPrice, priceSeries } from "@/lib/portfolio/prices";
+import { useExternalQuotes } from "@/lib/portfolio/quotes";
 import type { Transaction } from "@/lib/portfolio/types";
 import { useSimulation } from "@/lib/sim/store";
 
@@ -70,9 +71,17 @@ function RecordsPage() {
 
   const rows = useMemo(() => transactions.data ?? [], [transactions.data]);
   const holdings = useMemo(() => computeHoldings(rows), [rows]);
+  const holdingSymbols = useMemo(() => holdings.map((h) => h.symbol), [holdings]);
+  const externalQuotes = useExternalQuotes(holdingSymbols, market);
   const valued = useMemo(
-    () => valueHoldings(holdings, (symbol) => latestPrice(market, symbol)),
-    [holdings, market],
+    () =>
+      valueHoldings(holdings, (symbol) => {
+        const known = latestPrice(market, symbol);
+        if (known) return known;
+        const q = externalQuotes[symbol.toUpperCase()];
+        return q ? { price: q.price, date: q.date } : null;
+      }),
+    [holdings, market, externalQuotes],
   );
   const totals = useMemo(() => totalsByCurrency(valued), [valued]);
   const heldMap = useMemo(() => {
@@ -83,10 +92,15 @@ function RecordsPage() {
 
   const chart = useMemo(() => {
     if (!market) return [];
-    const series = portfolioValueSeries(rows, market.qqq.dates, (s) => priceSeries(market, s));
+    const series = portfolioValueSeries(rows, market.qqq.dates, (s) => {
+      const known = priceSeries(market, s);
+      if (known) return known;
+      const q = externalQuotes[s.toUpperCase()];
+      return q ? { dates: q.dates, close: q.close } : null;
+    });
     const step = Math.max(1, Math.floor(series.length / 400));
     return series.filter((_, i) => i % step === 0 || i === series.length - 1);
-  }, [rows, market]);
+  }, [rows, market, externalQuotes]);
 
   if (loading) {
     return <div className="p-8 text-sm text-muted-foreground">Loading your records…</div>;

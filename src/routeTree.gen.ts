@@ -22,6 +22,7 @@ import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as RecordsRouteImport } from './routes/records'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SensitivityRouteImport } from './routes/sensitivity'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as ApiPublicMarketLatestRouteImport } from './routes/api/public/market-latest'
@@ -91,6 +92,11 @@ const SensitivityRoute = SensitivityRouteImport.update({
   path: '/sensitivity',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/records': typeof RecordsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/records': typeof RecordsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/records': typeof RecordsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/simulator': typeof SimulatorRoute
   '/api/public/market-latest': typeof ApiPublicMarketLatestRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/reset-password'
     | '/sensitivity'
+    | '/settings'
     | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/reset-password'
     | '/sensitivity'
+    | '/settings'
     | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/reset-password'
     | '/sensitivity'
+    | '/settings'
     | '/signup'
     | '/simulator'
     | '/api/public/market-latest'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   RecordsRoute: typeof RecordsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SensitivityRoute: typeof SensitivityRoute
+  SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   SimulatorRoute: typeof SimulatorRoute
   ApiPublicMarketLatestRoute: typeof ApiPublicMarketLatestRoute
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SensitivityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -369,6 +389,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecordsRoute: RecordsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SensitivityRoute: SensitivityRoute,
+  SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   SimulatorRoute: SimulatorRoute,
   ApiPublicMarketLatestRoute: ApiPublicMarketLatestRoute,

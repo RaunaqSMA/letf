@@ -77,6 +77,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NavItems />
         </nav>
         <div className="border-t border-sidebar-border p-3">
+          <UserMenu />
+        </div>
+        <div className="border-t border-sidebar-border p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
             Research and education only. Not investment advice. Pre-inception results are
             reconstructed simulations, not actual ETF prices.
@@ -85,15 +88,18 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
           <div className="num text-sm font-semibold">
             LETF <span className="text-primary">DCA</span> Lab
+          </div>
+          <div className="w-40 shrink-0">
+            <UserMenu />
           </div>
         </header>
         <main className="min-w-0 flex-1 pb-20 lg:pb-0">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-8 gap-0.5 border-t border-sidebar-border bg-sidebar px-1 py-1.5 lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex gap-0.5 overflow-x-auto border-t border-sidebar-border bg-sidebar px-1 py-1.5 lg:hidden">
         <NavItems compact />
       </nav>
     </div>

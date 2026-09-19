@@ -76,7 +76,7 @@ export async function signUpWithEmail(email: string, password: string, displayNa
     password,
     options: {
       emailRedirectTo: `${window.location.origin}/records`,
-      data: displayName ? { display_name: displayName } : undefined,
+      ...(displayName ? { data: { display_name: displayName } } : {}),
     },
   });
 }

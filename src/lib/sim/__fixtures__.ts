@@ -99,8 +99,11 @@ export function makeConfig(patch: Partial<SimulationConfig> = {}): SimulationCon
     contributionStartDate: "",
     contributionEndDate: "",
     customEntries: [],
+    recordSource: "temporary",
+    recordPortfolioId: "",
+    savedEntries: [],
     fxRate: 1,
     fxLabel: "USD",
     ...patch,
-  };
+  } as SimulationConfig;
 }

@@ -86,7 +86,10 @@ export function TransactionDialog({
       existing && existing.transaction_type === "SELL"
         ? (held ?? 0) + Number(existing.quantity)
         : held;
-    const check = validateTransaction(form, { availableUnits: available });
+    const check = validateTransaction(
+      form,
+      available === undefined ? {} : { availableUnits: available },
+    );
     if (!check.ok) {
       setErrors(check.errors);
       return;

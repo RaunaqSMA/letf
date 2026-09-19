@@ -19,6 +19,7 @@ import { Route as ForecastRouteImport } from './routes/forecast'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MethodologyRouteImport } from './routes/methodology'
+import { Route as RecordsRouteImport } from './routes/records'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SensitivityRouteImport } from './routes/sensitivity'
 import { Route as SignupRouteImport } from './routes/signup'
@@ -75,6 +76,11 @@ const MethodologyRoute = MethodologyRouteImport.update({
   path: '/methodology',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecordsRoute = RecordsRouteImport.update({
+  id: '/records',
+  path: '/records',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/methodology': typeof MethodologyRoute
+  '/records': typeof RecordsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
   '/signup': typeof SignupRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/methodology': typeof MethodologyRoute
+  '/records': typeof RecordsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
   '/signup': typeof SignupRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/methodology': typeof MethodologyRoute
+  '/records': typeof RecordsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sensitivity': typeof SensitivityRoute
   '/signup': typeof SignupRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/methodology'
+    | '/records'
     | '/reset-password'
     | '/sensitivity'
     | '/signup'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/methodology'
+    | '/records'
     | '/reset-password'
     | '/sensitivity'
     | '/signup'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/methodology'
+    | '/records'
     | '/reset-password'
     | '/sensitivity'
     | '/signup'
@@ -218,6 +230,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   MethodologyRoute: typeof MethodologyRoute
+  RecordsRoute: typeof RecordsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SensitivityRoute: typeof SensitivityRoute
   SignupRoute: typeof SignupRoute
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MethodologyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/records': {
+      id: '/records'
+      path: '/records'
+      fullPath: '/records'
+      preLoaderRoute: typeof RecordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -346,6 +366,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MethodologyRoute: MethodologyRoute,
+  RecordsRoute: RecordsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SensitivityRoute: SensitivityRoute,
   SignupRoute: SignupRoute,

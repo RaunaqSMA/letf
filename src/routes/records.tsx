@@ -33,6 +33,7 @@ import {
   valueHoldings,
 } from "@/lib/portfolio/portfolioCalculations";
 import { latestPrice, priceSeries } from "@/lib/portfolio/prices";
+import { useExternalQuotes } from "@/lib/portfolio/quotes";
 import type { Transaction } from "@/lib/portfolio/types";
 import { useSimulation } from "@/lib/sim/store";
 

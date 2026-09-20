@@ -1,7 +1,14 @@
 import { money, number as fmtNumber, signedPercent } from "@/lib/format";
 import type { HoldingValued } from "@/lib/portfolio/types";
 
-export function HoldingsTable({ holdings }: { holdings: HoldingValued[] }) {
+export function HoldingsTable({
+  holdings,
+  live,
+}: {
+  holdings: HoldingValued[];
+  /** symbol (uppercase) → "Live · HH:MM ET" label for intraday-valued rows. */
+  live?: Record<string, string>;
+}) {
   const open = holdings.filter((h) => h.units > 1e-9);
   if (open.length === 0) {
     return (
@@ -39,7 +46,14 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValued[] }) {
                 {h.currentPrice === null ? (
                   <span className="text-xs text-muted-foreground">Price unavailable</span>
                 ) : (
-                  money(h.currentPrice, h.currency)
+                  <>
+                    {money(h.currentPrice, h.currency)}
+                    {live?.[h.symbol.toUpperCase()] ? (
+                      <div className="text-[10px] font-medium text-primary">
+                        {live[h.symbol.toUpperCase()]}
+                      </div>
+                    ) : null}
+                  </>
                 )}
               </td>
               <td className="num px-3 py-2 text-right">

@@ -99,9 +99,20 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         ? { ...config, customEntries: config.savedEntries }
         : config;
     if (!data) return withRecords;
-    const end = withRecords.endDate > latestDate ? latestDate : withRecords.endDate;
-    return { ...withRecords, endDate: end };
+    let start = withRecords.startDate;
+    let end = withRecords.endDate > latestDate ? latestDate : withRecords.endDate;
+    // Custom records must always be inside the simulated window, otherwise a
+    // stale start/end date silently drops every recorded purchase.
+    if (withRecords.frequency === "custom" && withRecords.customEntries.length > 0) {
+      const dates = withRecords.customEntries.map((e) => e.date).sort();
+      const first = dates[0]!;
+      const last = dates[dates.length - 1]!;
+      if (first < start) start = first;
+      if (last > end) end = last > latestDate ? latestDate : last;
+    }
+    return { ...withRecords, startDate: start, endDate: end };
   }, [config, data, latestDate]);
+
 
   const result = useMemo(() => {
     if (!data) return null;

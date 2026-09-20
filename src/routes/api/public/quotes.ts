@@ -19,6 +19,10 @@ interface QuoteOut {
   date: string;
   dates: string[];
   close: number[];
+  /** Latest intraday price during market hours (null outside them). */
+  livePrice: number | null;
+  /** ISO timestamp of livePrice. */
+  liveTime: string | null;
 }
 
 function isoDay(ts: number): string {
@@ -40,8 +44,15 @@ async function fetchQuote(symbol: string, cutoff: string): Promise<QuoteOut | nu
   if (!res.ok) return null;
   const json = (await res.json()) as any;
   const r = json?.chart?.result?.[0];
+  const meta = r?.meta ?? {};
   const stamps: number[] = r?.timestamp ?? [];
   const closes: (number | null)[] = r?.indicators?.quote?.[0]?.close ?? [];
+
+  const lp = meta?.regularMarketPrice;
+  const lt = meta?.regularMarketTime;
+  const livePrice = typeof lp === "number" && Number.isFinite(lp) ? lp : null;
+  const liveTime =
+    typeof lt === "number" && Number.isFinite(lt) ? new Date(lt * 1000).toISOString() : null;
 
   const dates: string[] = [];
   const close: number[] = [];
@@ -53,8 +64,15 @@ async function fetchQuote(symbol: string, cutoff: string): Promise<QuoteOut | nu
     dates.push(d);
     close.push(c);
   }
-  if (!dates.length) return null;
-  return { price: close[close.length - 1]!, date: dates[dates.length - 1]!, dates, close };
+  if (!dates.length && livePrice === null) return null;
+  return {
+    price: close.length ? close[close.length - 1]! : livePrice!,
+    date: dates.length ? dates[dates.length - 1]! : (liveTime ?? cutoff).slice(0, 10),
+    dates,
+    close,
+    livePrice,
+    liveTime,
+  };
 }
 
 export const Route = createFileRoute("/api/public/quotes")({

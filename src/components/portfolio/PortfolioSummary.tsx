@@ -5,9 +5,12 @@ import type { CurrencyTotals } from "@/lib/portfolio/portfolioCalculations";
 export function PortfolioSummary({
   totals,
   transactionCount,
+  live,
 }: {
   totals: CurrencyTotals[];
   transactionCount: number;
+  /** True when at least one holding is valued at a live intraday price. */
+  live?: boolean;
 }) {
   if (totals.length === 0) {
     return null;
@@ -25,7 +28,7 @@ export function PortfolioSummary({
               label="Portfolio value"
               value={t.value === null ? "Price unavailable" : money(t.value, t.currency, 0)}
               tone="gain"
-              sub="Last available market price"
+              sub={live ? "Live intraday price" : "Last available market price"}
             />
             <Metric
               label="Unrealised P/L"

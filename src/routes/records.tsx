@@ -33,7 +33,7 @@ import {
   valueHoldings,
 } from "@/lib/portfolio/portfolioCalculations";
 import { latestPrice, priceSeries } from "@/lib/portfolio/prices";
-import { useExternalQuotes } from "@/lib/portfolio/quotes";
+import { liveQuoteLabel, useExternalQuotes, useLiveQuotes } from "@/lib/portfolio/quotes";
 import type { Transaction } from "@/lib/portfolio/types";
 import { useSimulation } from "@/lib/sim/store";
 
@@ -73,15 +73,30 @@ function RecordsPage() {
   const holdings = useMemo(() => computeHoldings(rows), [rows]);
   const holdingSymbols = useMemo(() => holdings.map((h) => h.symbol), [holdings]);
   const externalQuotes = useExternalQuotes(holdingSymbols, market);
+  const liveQuotes = useLiveQuotes(holdingSymbols);
+  const liveLabels = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const [sym, q] of Object.entries(liveQuotes)) {
+      if (q.livePrice != null) m[sym] = liveQuoteLabel(q.liveTime);
+    }
+    return m;
+  }, [liveQuotes]);
+  const anyLive = Object.keys(liveLabels).length > 0;
   const valued = useMemo(
     () =>
       valueHoldings(holdings, (symbol) => {
+        // During market hours prefer the live intraday price (clearly labelled
+        // in the UI); otherwise fall back to the last official close.
+        const live = liveQuotes[symbol.toUpperCase()];
+        if (live?.livePrice != null) {
+          return { price: live.livePrice, date: (live.liveTime ?? "").slice(0, 10) };
+        }
         const known = latestPrice(market, symbol);
         if (known) return known;
         const q = externalQuotes[symbol.toUpperCase()];
         return q ? { price: q.price, date: q.date } : null;
       }),
-    [holdings, market, externalQuotes],
+    [holdings, market, externalQuotes, liveQuotes],
   );
   const totals = useMemo(() => totalsByCurrency(valued), [valued]);
   const heldMap = useMemo(() => {
@@ -98,9 +113,18 @@ function RecordsPage() {
       const q = externalQuotes[s.toUpperCase()];
       return q ? { dates: q.dates, close: q.close } : null;
     });
+    // Latest point reflects the live intraday valuation when available.
+    if (anyLive && series.length && totals.length === 1 && totals[0]!.value !== null) {
+      const last = series[series.length - 1]!;
+      series.push({
+        date: new Date().toISOString().slice(0, 10),
+        value: totals[0]!.value,
+        invested: last.invested,
+      });
+    }
     const step = Math.max(1, Math.floor(series.length / 400));
     return series.filter((_, i) => i % step === 0 || i === series.length - 1);
-  }, [rows, market, externalQuotes]);
+  }, [rows, market, externalQuotes, anyLive, totals]);
 
   if (loading) {
     return <div className="p-8 text-sm text-muted-foreground">Loading your records…</div>;
@@ -209,14 +233,14 @@ function RecordsPage() {
       ) : (
         <>
           <Section title="Personal record — portfolio dashboard">
-            <PortfolioSummary totals={totals} transactionCount={rows.length} />
+            <PortfolioSummary totals={totals} transactionCount={rows.length} live={anyLive} />
           </Section>
 
           <Section
             title="Holdings"
             description="Units, average cost and P/L derived from the transaction ledger. Accounting method: FIFO."
           >
-            <HoldingsTable holdings={valued} />
+            <HoldingsTable holdings={valued} live={liveLabels} />
           </Section>
 
           <Section

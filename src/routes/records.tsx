@@ -113,9 +113,18 @@ function RecordsPage() {
       const q = externalQuotes[s.toUpperCase()];
       return q ? { dates: q.dates, close: q.close } : null;
     });
+    // Latest point reflects the live intraday valuation when available.
+    if (anyLive && series.length && totals.length === 1 && totals[0]!.value !== null) {
+      const last = series[series.length - 1]!;
+      series.push({
+        date: new Date().toISOString().slice(0, 10),
+        value: totals[0]!.value,
+        invested: last.invested,
+      });
+    }
     const step = Math.max(1, Math.floor(series.length / 400));
     return series.filter((_, i) => i % step === 0 || i === series.length - 1);
-  }, [rows, market, externalQuotes]);
+  }, [rows, market, externalQuotes, anyLive, totals]);
 
   if (loading) {
     return <div className="p-8 text-sm text-muted-foreground">Loading your records…</div>;
@@ -224,14 +233,14 @@ function RecordsPage() {
       ) : (
         <>
           <Section title="Personal record — portfolio dashboard">
-            <PortfolioSummary totals={totals} transactionCount={rows.length} />
+            <PortfolioSummary totals={totals} transactionCount={rows.length} live={anyLive} />
           </Section>
 
           <Section
             title="Holdings"
             description="Units, average cost and P/L derived from the transaction ledger. Accounting method: FIFO."
           >
-            <HoldingsTable holdings={valued} />
+            <HoldingsTable holdings={valued} live={liveLabels} />
           </Section>
 
           <Section

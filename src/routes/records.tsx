@@ -33,7 +33,7 @@ import {
   valueHoldings,
 } from "@/lib/portfolio/portfolioCalculations";
 import { latestPrice, priceSeries } from "@/lib/portfolio/prices";
-import { useExternalQuotes } from "@/lib/portfolio/quotes";
+import { liveQuoteLabel, useExternalQuotes, useLiveQuotes } from "@/lib/portfolio/quotes";
 import type { Transaction } from "@/lib/portfolio/types";
 import { useSimulation } from "@/lib/sim/store";
 
@@ -73,15 +73,30 @@ function RecordsPage() {
   const holdings = useMemo(() => computeHoldings(rows), [rows]);
   const holdingSymbols = useMemo(() => holdings.map((h) => h.symbol), [holdings]);
   const externalQuotes = useExternalQuotes(holdingSymbols, market);
+  const liveQuotes = useLiveQuotes(holdingSymbols);
+  const liveLabels = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const [sym, q] of Object.entries(liveQuotes)) {
+      if (q.livePrice != null) m[sym] = liveQuoteLabel(q.liveTime);
+    }
+    return m;
+  }, [liveQuotes]);
+  const anyLive = Object.keys(liveLabels).length > 0;
   const valued = useMemo(
     () =>
       valueHoldings(holdings, (symbol) => {
+        // During market hours prefer the live intraday price (clearly labelled
+        // in the UI); otherwise fall back to the last official close.
+        const live = liveQuotes[symbol.toUpperCase()];
+        if (live?.livePrice != null) {
+          return { price: live.livePrice, date: (live.liveTime ?? "").slice(0, 10) };
+        }
         const known = latestPrice(market, symbol);
         if (known) return known;
         const q = externalQuotes[symbol.toUpperCase()];
         return q ? { price: q.price, date: q.date } : null;
       }),
-    [holdings, market, externalQuotes],
+    [holdings, market, externalQuotes, liveQuotes],
   );
   const totals = useMemo(() => totalsByCurrency(valued), [valued]);
   const heldMap = useMemo(() => {

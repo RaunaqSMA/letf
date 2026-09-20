@@ -91,7 +91,7 @@ export function liveQuoteLabel(liveTime: string | null | undefined): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "America/New_York",
+    timeZone: "Asia/Kolkata",
   });
-  return `Live · ${hm} ET`;
+  return `Live · ${hm} IST`;
 }

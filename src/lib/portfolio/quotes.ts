@@ -9,6 +9,10 @@ export interface ExternalQuote {
   date: string;
   dates: string[];
   close: number[];
+  /** Latest intraday price during market hours (null outside them). */
+  livePrice?: number | null;
+  /** ISO timestamp of livePrice. */
+  liveTime?: string | null;
 }
 
 /**

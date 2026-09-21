@@ -55,7 +55,7 @@ export function useExternalQuotes(
 
 /**
  * Live intraday quotes for ALL given symbols (including the bundled research
- * tickers). Refreshes every minute while open; used only by the Records page —
+ * tickers). Refreshes every five seconds while open; used only by the Records page —
  * research charts keep the one-day-lagged daily close.
  */
 export function useLiveQuotes(symbols: string[]): Record<string, ExternalQuote> {
@@ -67,11 +67,14 @@ export function useLiveQuotes(symbols: string[]): Record<string, ExternalQuote> 
   const query = useQuery({
     queryKey: ["live-quotes", wanted.join(",")],
     enabled: wanted.length > 0,
-    staleTime: 60 * 1000,
-    refetchInterval: 60 * 1000,
+    staleTime: 0,
+    refetchInterval: 5 * 1000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: "always",
     queryFn: async () => {
       const res = await fetch(
         `/api/public/quotes?symbols=${encodeURIComponent(wanted.join(","))}`,
+        { cache: "no-store" },
       );
       if (!res.ok) throw new Error("Live quote lookup failed");
       const json = (await res.json()) as { quotes: Record<string, ExternalQuote> };

@@ -23,22 +23,22 @@ export function PortfolioSummary({
             <div className="label-xs mb-2">{t.currency} totals</div>
           ) : null}
           <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-5">
-            <Metric label="Total invested" value={money(t.invested, t.currency, 0)} />
+            <Metric label="Total invested" value={money(t.invested, t.currency, 2)} />
             <Metric
               label="Portfolio value"
-              value={t.value === null ? "Price unavailable" : money(t.value, t.currency, 0)}
+              value={t.value === null ? "Price unavailable" : money(t.value, t.currency, 2)}
               tone="gain"
               sub={live ? "Live intraday price" : "Last available market price"}
             />
             <Metric
               label="Unrealised P/L"
-              value={t.unrealized === null ? "—" : money(t.unrealized, t.currency, 0)}
+              value={t.unrealized === null ? "—" : money(t.unrealized, t.currency, 2)}
               tone={(t.unrealized ?? 0) >= 0 ? "gain" : "loss"}
               sub={signedPercent(t.returnPct, 2)}
             />
             <Metric
               label="Realised P/L (FIFO)"
-              value={money(t.realized, t.currency, 0)}
+              value={money(t.realized, t.currency, 2)}
               tone={t.realized >= 0 ? "gain" : "loss"}
             />
             <Metric

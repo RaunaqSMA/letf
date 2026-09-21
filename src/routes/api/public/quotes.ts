@@ -111,7 +111,7 @@ export const Route = createFileRoute("/api/public/quotes")({
         return new Response(JSON.stringify({ asOf: cutoff, quotes }), {
           headers: {
             "content-type": "application/json",
-            "cache-control": "public, max-age=300, s-maxage=1800",
+            "cache-control": "no-store, max-age=0",
           },
         });
       },
